@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/Riyoukou/odyssey/app/controller/cicd"
+	"github.com/Riyoukou/odyssey/app/controller/user"
 	"github.com/Riyoukou/odyssey/app/middleware"
 	"github.com/gin-gonic/gin"
 )
@@ -24,16 +25,18 @@ func SetupRouter(r *gin.Engine) {
 
 	_user := r.Group("/user")
 	{
-		_user.POST("login", cicd.HandleUserLogin)
-		_user.POST("register", cicd.HandleUserRegister)
+		_user.POST("login", user.HandleUserLogin)
+		_user.POST("register", user.HandleUserRegister)
+		_user.GET("fetch/:type", user.HandleUserFetch)
+		_user.DELETE("delete/:type/:id", user.HandleUserDelete)
 	}
 
 	_cicd := r.Group("/cicd")
 	{
-		_cicd.GET("fetch/repo/:type", cicd.HandleCICDFetchRepo)
-		_cicd.GET("get/repo/:type", cicd.HandleCICDGetRepo)
-		_cicd.POST("create/repo/:type", cicd.HandleCICDCreateRepo)
-		_cicd.POST("update/repo/:type", cicd.HandleCICDUpdateRepo)
-		_cicd.DELETE("delete/repo/:type/:id", cicd.HandleCICDDeleteRepo)
+		_cicd.GET("fetch/:type", cicd.HandleCICDFetch)
+		_cicd.GET("get/:type", cicd.HandleCICDGet)
+		_cicd.POST("create/:type", cicd.HandleCICDCreate)
+		_cicd.POST("update/:type", cicd.HandleCICDUpdate)
+		_cicd.DELETE("delete/:type/:id", cicd.HandleCICDDelete)
 	}
 }

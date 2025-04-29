@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func HandleCICDFetchRepo(c *gin.Context) {
+func HandleCICDFetch(c *gin.Context) {
 	var (
 		err    error
 		result interface{}
@@ -42,7 +42,7 @@ func HandleCICDFetchRepo(c *gin.Context) {
 	response.Success(c, result, fmt.Sprintf("%s fetched successfully", c.Param("type")))
 }
 
-func HandleCICDGetRepo(c *gin.Context) {
+func HandleCICDGet(c *gin.Context) {
 	var (
 		err    error
 		result interface{}
@@ -72,7 +72,7 @@ func HandleCICDGetRepo(c *gin.Context) {
 	response.Success(c, result, fmt.Sprintf("%s fetched successfully", c.Param("type")))
 }
 
-func HandleCICDCreateRepo(c *gin.Context) {
+func HandleCICDCreate(c *gin.Context) {
 	var err error
 	switch c.Param("type") {
 	case "cluster":
@@ -146,7 +146,7 @@ func HandleCICDCreateRepo(c *gin.Context) {
 	response.Success(c, nil, fmt.Sprintf("%s created successfully", c.Param("type")))
 }
 
-func HandleCICDUpdateRepo(c *gin.Context) {
+func HandleCICDUpdate(c *gin.Context) {
 	var err error
 	switch c.Param("type") {
 	case "cluster":
@@ -187,7 +187,7 @@ func HandleCICDUpdateRepo(c *gin.Context) {
 	response.Success(c, nil, fmt.Sprintf("%s updated successfully", c.Param("type")))
 }
 
-func HandleCICDDeleteRepo(c *gin.Context) {
+func HandleCICDDelete(c *gin.Context) {
 	var (
 		err   error
 		intID int64

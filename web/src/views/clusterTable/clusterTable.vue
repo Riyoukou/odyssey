@@ -4,7 +4,11 @@
     <div class="table-bar flex justify-between items-center mb-3">
       <div>
         <ElButton icon="Plus" @click="form.toAdd">新增</ElButton>
-        <ElButton icon="Delete" @click="deleteSelected">删除</ElButton>
+        <el-popconfirm title="Are you sure to delete this?"  @confirm="deleteSelected">
+          <template #reference>
+            <ElButton icon="Delete">删除</ElButton>
+          </template>
+        </el-popconfirm>
       </div>
       <div>
         <ElButton icon="Refresh" round @click="table.request"></ElButton>
@@ -44,7 +48,7 @@ const form = reactive({
   model: { name: '', api_server: '', region: '', version: '', description: '', config: '' },
   items: [
     { label: '集群名称', prop: 'name', span: 3, required: true },
-    { label: 'api_server', span: 3, prop: 'api_server', required: true },
+    { label: 'APIServer', span: 3, prop: 'api_server', required: true },
     { label: 'Region', span: 3, prop: 'region' },
     { label: '集群版本', span: 3, prop: 'version' },
     {
@@ -58,6 +62,7 @@ const form = reactive({
       prop: 'config',
       span: 3,
       attrs: { type: 'textarea', rows: 20 },
+      required: true
     }
   ],
   toAdd: () => {
@@ -97,12 +102,12 @@ const table = reactive({
   columns: [
     { label: '#', type: 'selection' },
     { label: '集群名称', prop: 'name', width: 200 },
-    { label: '集群api_server', prop: 'api_server', width: 200 },
-    { label: 'Region', prop: 'region', width: 100 },
-    { label: '集群版本', prop: 'version', width: 100 },
+    { label: 'APIServer', prop: 'api_server', width: 200 },
+    { label: 'Region', prop: 'region', width: 150 },
+    { label: '集群版本', prop: 'version', width: 150 },
     { label: '介绍', prop: 'description', showOverflowTooltip: true },
     {
-      width: '120px',
+      width: '200px',
       label: '操作',
       fixed: 'right',
       slot: (scope) => {
@@ -118,7 +123,7 @@ const table = reactive({
   ],
   request: () => {
     table.loading = true
-    http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/repo/cluster`).then((res) => {
+    http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/cluster`).then((res) => {
       table.data = res.result
       table.loading = false
     })
@@ -129,21 +134,21 @@ const table = reactive({
       .replace(/\\n {2}/g, '\n')    // 去掉 \n 后的两个空格
       .toString()
     table.loading = true
-    http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/create/repo/cluster`, form).then((res) => {
+    http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/create/cluster`, form).then((res) => {
       table.loading = false
       table.request()
     })
   },  
   edit: (form) => {
     table.loading = true
-    http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/update/repo/cluster`, form).then((res) => {
+    http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/update/cluster`, form).then((res) => {
       table.loading = false
       table.request()
     })
   },
   delete: (form) => {
     table.loading = true
-    http.delete(import.meta.env.VITE_APP_BASE_URL + `/cicd/delete/repo/cluster/${form.id}`).then((res) => {
+    http.delete(import.meta.env.VITE_APP_BASE_URL + `/cicd/delete/cluster/${form.id}`).then((res) => {
       table.loading = false
       table.request()
     })

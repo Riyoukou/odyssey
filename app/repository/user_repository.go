@@ -6,6 +6,7 @@ import (
 
 	"github.com/Riyoukou/odyssey/app/model"
 	"github.com/Riyoukou/odyssey/app/utils"
+	"github.com/Riyoukou/odyssey/pkg/logger"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -59,5 +60,22 @@ func UserRegister(name, password, email, phone string) error {
 	if err := DB.Create(&user).Error; err != nil {
 		return errors.New("数据库保存用户信息失败")
 	}
+	return nil
+}
+
+func FetchUsers() ([]model.UserTable, error) {
+	var user []model.UserTable
+	if err := DB.Find(&user).Error; err != nil {
+		return nil, errors.New("数据库查询用户信息失败")
+	}
+	return user, nil
+}
+
+func DeleteUser(userID int64) error {
+	if err := DB.Delete(&model.UserTable{}, userID).Error; err != nil {
+		logger.Errorf("Failed to delete user: %v", err)
+		return err
+	}
+
 	return nil
 }

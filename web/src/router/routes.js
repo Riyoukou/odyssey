@@ -42,6 +42,15 @@ export const dynamicRoutes = [
     component: () => import('@/views/projectTable/projectTable.vue')
   },
   {
+    path: '/userTable',
+    name: 'userTable',
+    meta: {
+      title: '用户列表',
+      icon: 'Menu'
+    },
+    component: () => import('@/views/userTable/userTable.vue')
+  },
+  {
     path: '/cacheView',
     name: 'cacheView',
     meta: {
