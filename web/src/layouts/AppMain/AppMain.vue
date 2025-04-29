@@ -37,7 +37,7 @@
   </ElMain>
   <!-- 页脚 -->
   <ElFooter v-if="appStore.footer" height="25px" class="border-t flex items-center justify-end">
-    <span class="text-xs text-gray-500"> ag-admin copyright©{{ new Date().getFullYear() }}</span>
+    <span class="text-xs text-gray-500"> riyoukou copyright©{{ new Date().getFullYear() }}</span>
   </ElFooter>
   <!-- 缩小 -->
   <transition name="el-zoom-in-top">
