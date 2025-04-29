@@ -1,30 +1,44 @@
 <template>
-  <div class="flex flex-col overflow-auto">
-    <!-- 按钮条 -->
-    <div class="table-bar flex justify-between items-center mb-3">
-      <div>
-        <ElButton icon="Plus" @click="form.toAdd">新增</ElButton>
-        <ElButton icon="Delete" @click="deleteSelected">删除</ElButton>
-      </div>
-      <div>
-        <ElButton icon="Refresh" round @click="table.request"></ElButton>
-      </div>
+  <div class="flex h-full overflow-hidden">
+    <!-- 左侧导航栏 -->
+    <div class="w-60 bg-white border-r p-4">
+      <el-tree
+        style="max-width: 600px"
+        :data="data"
+        :props="defaultProps"
+        @node-click="handleNodeClick"
+      />
     </div>
-    <!-- 列表 -->
-    <AgelTable class="flex-1" v-bind="table" @selection-change="handleSelectionChange"> </AgelTable>
-    <!-- 弹窗表单 -->
-    <ElDialog v-model="form.show" :title="form.title" width="800px" top="10vh">
-      <ElForm :ref="(v) => (form.ref = v)" :model="form.model" label-width="80px">
-        <AgelFormDesc 
-          :items="form.items.filter(item => item.prop !== 'config' || form.state !== 'edit')" 
-          :view-model="form.state === 'view'"
-        ></AgelFormDesc>
-      </ElForm>
-      <template #footer>
-        <ElButton v-if="form.state === 'add'" type="primary" @click="form.submit">提交</ElButton>
-        <ElButton v-if="form.state === 'edit'" type="primary" @click="form.submitEdit">提交</ElButton>
-      </template>
-    </ElDialog>
+    <!-- 右侧内容区域 -->
+    <div class="flex flex-col flex-1 overflow-auto p-4">
+      <!-- 按钮条 -->
+      <div class="table-bar flex justify-between items-center mb-3">
+        <div>
+          <ElButton icon="Plus" @click="form.toAdd">新增</ElButton>
+          <ElButton icon="Delete" @click="deleteSelected">删除</ElButton>
+        </div>
+        <div>
+          <ElButton icon="Refresh" round @click="table.request"></ElButton>
+        </div>
+      </div>
+
+      <!-- 列表 -->
+      <AgelTable class="flex-1" v-bind="table" @selection-change="handleSelectionChange"> </AgelTable>
+
+      <!-- 弹窗表单 -->
+      <ElDialog v-model="form.show" :title="form.title" width="800px" top="10vh">
+        <ElForm :ref="(v) => (form.ref = v)" :model="form.model" label-width="80px">
+          <AgelFormDesc 
+            :items="form.items.filter(item => item.prop !== 'config' || form.state !== 'edit')" 
+            :view-model="form.state === 'view'"
+          ></AgelFormDesc>
+        </ElForm>
+        <template #footer>
+          <ElButton v-if="form.state === 'add'" type="primary" @click="form.submit">提交</ElButton>
+          <ElButton v-if="form.state === 'edit'" type="primary" @click="form.submitEdit">提交</ElButton>
+        </template>
+      </ElDialog>
+    </div>
   </div>
 </template>
 
@@ -167,4 +181,73 @@ function deleteSelected() {
 }
 
 table.request()
+
+
+const handleNodeClick = (data) => {
+  console.log(data)
+}
+
+const data = [
+  {
+    label: 'Level one 1',
+    children: [
+      {
+        label: 'Level two 1-1',
+        children: [
+          {
+            label: 'Level three 1-1-1',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    label: 'Level one 2',
+    children: [
+      {
+        label: 'Level two 2-1',
+        children: [
+          {
+            label: 'Level three 2-1-1',
+          },
+        ],
+      },
+      {
+        label: 'Level two 2-2',
+        children: [
+          {
+            label: 'Level three 2-2-1',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    label: 'Level one 3',
+    children: [
+      {
+        label: 'Level two 3-1',
+        children: [
+          {
+            label: 'Level three 3-1-1',
+          },
+        ],
+      },
+      {
+        label: 'Level two 3-2',
+        children: [
+          {
+            label: 'Level three 3-2-1',
+          },
+        ],
+      },
+    ],
+  },
+]
+
+const defaultProps = {
+  children: 'children',
+  label: 'label',
+}
+
 </script>
