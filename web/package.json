@@ -17,11 +17,11 @@
     "@vueuse/core": "^13.1.0",
     "axios": "^1.9.0",
     "element-plus": "^2.9.9",
-    "element-plus-crx": "1.1.8",
-    "js-yaml": "^4.1.0",
+    "element-plus-crx": "^1.1.8",
     "pinia": "^3.0.2",
     "vue": "^3.5.13",
-    "vue-router": "^4.5.1"
+    "vue-router": "^4.5.1",
+    "yaml": "^2.7.1"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.11.0",

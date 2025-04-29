@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["vite/client"],
     "target": "ESNext",
     "module": "ESNext",                      // 支持 import.meta
     "moduleResolution": "Node",

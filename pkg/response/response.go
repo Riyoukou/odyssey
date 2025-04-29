@@ -10,15 +10,15 @@ import (
 type Response struct {
 	Status  int         `json:"status"`  // 状态码
 	Message string      `json:"message"` // 消息
-	Result  interface{} `json:"result"`  // 数据
+	Data    interface{} `json:"data"`    // 数据
 }
 
 // Success 成功响应
-func Success(c *gin.Context, result interface{}, message string) {
+func Success(c *gin.Context, data interface{}, message string) {
 	c.JSON(http.StatusOK, Response{
 		Status:  http.StatusOK,
 		Message: message,
-		Result:  result,
+		Data:    data,
 	})
 }
 
@@ -27,7 +27,7 @@ func Error(c *gin.Context, statusCode int, err error) {
 	c.JSON(statusCode, Response{
 		Status:  statusCode,
 		Message: err.Error(),
-		Result:  nil,
+		Data:    nil,
 	})
 }
 
@@ -35,14 +35,14 @@ func FailWithMessage(c *gin.Context, message string) {
 	c.JSON(http.StatusOK, Response{
 		Status:  http.StatusOK,
 		Message: message,
-		Result:  nil,
+		Data:    nil,
 	})
 }
 func OkWithData(c *gin.Context, data interface{}) {
 	c.JSON(http.StatusOK, Response{
 		Status:  http.StatusOK,
 		Message: "success",
-		Result:  data,
+		Data:    data,
 	})
 }
 
@@ -50,6 +50,6 @@ func Ok(c *gin.Context) {
 	c.JSON(http.StatusOK, Response{
 		Status:  http.StatusOK,
 		Message: "success",
-		Result:  nil,
+		Data:    nil,
 	})
 }

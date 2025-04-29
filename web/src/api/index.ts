@@ -15,14 +15,20 @@ http.interceptors.request.use((config: any) => {
 
 http.interceptors.response.use((response: any) => {
   const { data } = response
-  if (data.status !== 200) {
-    // 只有当 message 存在且 hideError 不为 true 时才显示错误消息
-    if (data.message && !data.hideError) {
-      ElMessage.error(data.message)
-    }
-    return Promise.reject(data)
+  if (data.status == 401) {
+    ElMessage.error("登录状态已过期");;
+    useUserStore().logoutApp();
+    return Promise.reject(data);
+  } else if (data.status == 404) {
+    ElMessage.error("请求连接超时");
+    return Promise.reject(data);
+  } else if (data.status != 200) {
+    ElMessage.error(`请求失败:${data.message} Code:${data.status}`);
+    return Promise.reject(data);
+  } else {
+    // 返回数据
+    return Promise.resolve(data);
   }
-  return data
 })
 
 export default http

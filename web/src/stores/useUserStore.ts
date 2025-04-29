@@ -31,23 +31,23 @@ export default defineStore('userStore', () => {
     }
   }
 
-  function loginApp(data) {
+  function loginApp(data: any) {
     return http({
       url: import.meta.env.VITE_APP_BASE_URL + `/user/login`,
       method: 'post',
       data: data
-    }).then((res) => {
+    }).then((res: any) => {
       userInfo.value = res.result
       return res
     })
   }
 
-  function registerApp(data) {
+  function registerApp(data: any) {
     return http({
       url: import.meta.env.VITE_APP_BASE_URL + `/user/register`,
       method: 'post',
       data: data
-    }).then((res) => {
+    }).then((res: any) => {
       return res
     })
   }
@@ -59,11 +59,30 @@ export default defineStore('userStore', () => {
     }))
   }
 
-  function getMenuData(list) {
+  interface MenuItem {
+    children: MenuItem[];
+    title: string;
+    icon?: string;
+    index: string;
+    hidden: boolean;
+  }
+
+  interface RouteItem {
+    path: string;
+    meta: {
+      hidden?: boolean;
+      roles?: string[];
+      title: string;
+      icon?: string;
+    };
+    children?: RouteItem[];
+  }
+
+  function getMenuData(list: RouteItem[]): MenuItem[] {
     return list.map(item => {
       const isShow = item.meta.hidden !== true
       const hasRole = item.meta.roles ? item.meta.roles.includes(role.value) : true
-      const menuItem = {
+      const menuItem: MenuItem = {
         children: [],
         title: item.meta.title,
         icon: item.meta.icon,
