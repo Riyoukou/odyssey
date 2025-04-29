@@ -3,7 +3,7 @@ GO + VUE3编写的运维平台
 
 后端:使用GOGIN框架
 
-VUE3:使用Vue3+TypeScript+Vite+JSX
+VUE3:使用Vue3+TypeScript+Vite
 
 本地调试指南:
 ```
