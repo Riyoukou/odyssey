@@ -2,6 +2,6 @@
   <div>admin 管理员可见</div>
 </template>
 
-<script setup></script>
+<script setup lang="ts"></script>
 
 <style scoped></style>

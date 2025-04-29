@@ -1,7 +1,6 @@
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import vueJsx from '@vitejs/plugin-vue-jsx'
 import UnoCSS from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 
@@ -12,7 +11,6 @@ export default defineConfig(({ mode }) => {
     base: env.VITE_BASE_PATH,
     plugins: [
       vue(),
-      vueJsx(),
       UnoCSS(),
       AutoImport({
         imports: ['vue', 'vue-router', 'vuex'],

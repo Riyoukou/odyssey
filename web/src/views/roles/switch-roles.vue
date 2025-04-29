@@ -5,33 +5,32 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import useUserStore from '@/stores/useUserStore'
 import { ElMessage } from 'element-plus'
 const userStore = useUserStore()
 
-function loginAdmin() {
+function loginAdmin(): void {
   userStore
     .loginApp({
       name: 'admin',
       password: '123'
-    })
-    .then(() => {
+    } as any)
+    .then((): void => {
       ElMessage.success('切换管理员角色成功')
     })
 }
 
-function loginUser() {
+function loginUser(): void {
   userStore
     .loginApp({
       name: 'user',
       password: '123'
-    })
-    .then(() => {
+    } as any)
+    .then((): void => {
       ElMessage.success('切换用户角色成功')
     })
 }
-
 </script>
 
 <style scoped></style>

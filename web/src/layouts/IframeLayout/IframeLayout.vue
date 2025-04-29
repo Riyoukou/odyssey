@@ -12,12 +12,12 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 /** iframe 页面暂不可通过 keepalive 进行缓存 */
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
-const link = route.meta.link
+const link = route.meta.link as string
 
 function toNewTab() {
   window.open(link, '_blank')

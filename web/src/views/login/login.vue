@@ -26,11 +26,12 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { reactive, ref } from 'vue'
 import useUserStore from '@/stores/useUserStore'
 import { homeRoute } from '@/router/routes'
 import { useRouter } from 'vue-router'
+import type { FormInstance } from 'element-plus'
 
 const form = reactive({
   loading: false,
@@ -43,8 +44,7 @@ const form = reactive({
     password: { required: true, message: 'Please input Activity password', trigger: 'blur' }
   }
 })
-
-const elFormRef = ref(null)
+const elFormRef = ref<FormInstance>()
 const userStore = useUserStore()
 const router = useRouter()
 async function submit() {

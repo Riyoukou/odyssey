@@ -36,10 +36,11 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { reactive, ref } from 'vue'
 import useUserStore from '@/stores/useUserStore'
 import { useRouter } from 'vue-router'
+import type { FormInstance } from 'element-plus'
 
 const form = reactive({
   loading: false,
@@ -59,7 +60,7 @@ const form = reactive({
     phone: [
       { required: true, message: 'Please input phone', trigger: 'blur' },
       {
-        validator: (rule, value, callback) => {
+        validator: (rule: any, value: any, callback: any) => {
           const phoneRegex = /^\d{11}$/
           if (!phoneRegex.test(value)) {
             callback(new Error('Please input valid 11-digit phone number'))
@@ -73,7 +74,7 @@ const form = reactive({
   }
 })
 
-const elFormRef = ref(null)
+const elFormRef = ref<FormInstance>()
 const userStore = useUserStore()
 const router = useRouter()
 async function submit() {

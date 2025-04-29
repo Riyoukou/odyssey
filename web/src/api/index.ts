@@ -7,16 +7,19 @@ const http = axios.create({
   withCredentials: true
 })
 
-http.interceptors.request.use((config) => {
+http.interceptors.request.use((config: any) => {
   const userStore = useUserStore()
   config.headers['token'] = userStore.token
   return config
 })
 
-http.interceptors.response.use((response) => {
+http.interceptors.response.use((response: any) => {
   const { data } = response
   if (data.status !== 200) {
-    data.message && ElMessage.error(data.message)
+    // 只有当 message 存在且 hideError 不为 true 时才显示错误消息
+    if (data.message && !data.hideError) {
+      ElMessage.error(data.message)
+    }
     return Promise.reject(data)
   }
   return data

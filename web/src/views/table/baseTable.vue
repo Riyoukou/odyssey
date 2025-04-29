@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col overflow-auto">
     <!-- 查询 -->
-    <ElForm :ref="(v) => (search.ref = v)" v-show="search.show" :model="search.model" label-width="80px">
+    <ElForm :ref="(v: FormInstance | null) => (search.ref = v)" v-show="search.show" :model="search.model" label-width="80px">
       <AgelFormGrid :items="search.items" responsive></AgelFormGrid>
       <div class="flex justify-center mb-3">
         <ElButton icon="RefreshRight" @click="() => search.ref?.resetFields()">重置</ElButton>
@@ -20,10 +20,16 @@
       </div>
     </div>
     <!-- 列表 -->
-    <AgelTable class="flex-1" v-bind="table" v-model:page="table.page"> </AgelTable>
+    <AgelTable class="flex-1" v-bind="table" v-model:page="table.page">
+      <template #operation="scope: { row: FormModel }">
+        <ElButton link type="primary" @click="form.toView(scope.row)">查看</ElButton>
+        <ElDivider direction="vertical" />
+        <ElButton link type="primary" @click="form.toEdit(scope.row)">编辑</ElButton>
+      </template>
+    </AgelTable>
     <!-- 弹窗表单 -->
     <ElDialog v-model="form.show" :title="form.title" width="800px" top="10vh">
-      <ElForm :ref="(v) => (form.ref = v)" :model="form.model" label-width="80px">
+      <ElForm :ref="(v: FormInstance | null) => (form.ref = v)" :model="form.model" label-width="80px">
         <AgelFormDesc :items="form.items" :view-model="form.state == 'view'"></AgelFormDesc>
       </ElForm>
       <template #footer>
@@ -33,14 +39,39 @@
   </div>
 </template>
 
-<script lang="jsx" setup>
-import { reactive, ref, nextTick } from 'vue'
+<script lang="ts" setup>
+import { reactive } from 'vue'
+import type { FormInstance } from 'element-plus'
 import http from '@/api'
 
+interface SearchModel {
+  name: string
+  age: string
+  email: string
+  date: string | null
+}
+
+interface FormModel {
+  name: string
+  age: string
+  date: string | null
+  email: string
+  decs: string
+}
+
+interface TablePage {
+  sortOrder: string | null
+  sortProp: string
+  currentPage: number
+  pageSize: number
+  total: number
+}
+
+// 搜索表单配置
 const search = reactive({
-  ref: null,
+  ref: null as FormInstance | null,
   show: false,
-  model: { name: '', age: '', email: '', date: '' },
+  model: { name: '', age: '', email: '', date: '' } as SearchModel,
   items: [
     { label: '姓名', prop: 'name' },
     {
@@ -49,9 +80,7 @@ const search = reactive({
       slot: 'agel-select',
       attrs: {
         options: ['12', '13'],
-        onChange: (v) => {
-          console.log(v)
-        }
+        onChange: (v: string) => console.log(v)
       }
     },
     { label: '邮件', prop: 'email' },
@@ -64,47 +93,37 @@ const search = reactive({
   ]
 })
 
+// 表单配置
 const form = reactive({
-  ref: null,
+  ref: null as FormInstance | null,
   show: false,
   title: '',
-  state: 'edit',
-  model: { name: '', age: '', date: '', email: '', decs: '' },
+  state: 'edit' as 'edit' | 'add' | 'view',
   items: [
-    { label: '姓名', prop: 'name', required: true },
-    { label: '年龄', prop: 'age', required: true },
-    { label: '出生日期', prop: 'date', slot: 'el-date-picker' },
-    { label: '邮件', span: 3, prop: 'email' },
-    {
-      label: '介绍',
-      prop: 'decs',
-      span: 3,
-      attrs: { type: 'textarea', rows: 5 }
-    }
+    { label: '姓名', prop: 'name' },
+    { label: '年龄', prop: 'age' },
+    { label: '出生日期', prop: 'date' },
+    { label: '邮件', prop: 'email' },
+    { label: '介绍', prop: 'decs' }
   ],
+  model: { name: '', age: '', date: '', email: '', decs: '' } as FormModel,
   toAdd: () => {
     form.show = true
     form.title = '新增用户'
     form.state = 'add'
-    nextTick(() => {
-      form.ref?.resetFields()
-    })
+    form.ref?.resetFields()
   },
-  toEdit: (row) => {
+  toEdit: (row: FormModel) => {
     form.show = true
     form.title = '编辑用户资料'
     form.state = 'edit'
-    nextTick(() => {
-      form.model = { ...row }
-    })
+    form.model = { ...row }
   },
-  toView: (row) => {
+  toView: (row: FormModel) => {
     form.show = true
     form.title = '查看用户资料'
     form.state = 'view'
-    nextTick(() => {
-      form.model = { ...row }
-    })
+    form.model = { ...row }
   },
   submit: () => {
     form.ref?.validate().then(() => {
@@ -114,17 +133,18 @@ const form = reactive({
   }
 })
 
+// 表格配置
 const table = reactive({
   loading: false,
   border: true,
-  data: [],
+  data: [] as FormModel[],
   page: {
     sortOrder: null,
     sortProp: '',
     currentPage: 1,
     pageSize: 10,
     total: 0
-  },
+  } as TablePage,
   columns: [
     { label: '#', type: 'selection' },
     { label: '姓名', prop: 'name', sortable: 'custom', width: 100 },
@@ -132,24 +152,7 @@ const table = reactive({
     { label: '邮件', prop: 'email', width: 250 },
     { label: '出生日期', prop: 'date', width: 150 },
     { label: '介绍', prop: 'decs', showOverflowTooltip: true },
-    {
-      width: '120px',
-      label: '操作',
-      fixed: 'right',
-      slot: (scope) => {
-        return (
-          <div>
-            <el-button link type="primary" onClick={() => form.toView(scope.row)}>
-              查看
-            </el-button>
-            <el-divider direction="vertical" />
-            <el-button link type="primary" onClick={() => form.toEdit(scope.row)}>
-              编辑
-            </el-button>
-          </div>
-        )
-      }
-    }
+    { width: '120px', label: '操作', fixed: 'right', slot: 'operation' }
   ],
   request: () => {
     table.loading = true
@@ -161,5 +164,6 @@ const table = reactive({
   }
 })
 
+// 初始化加载数据
 table.request()
 </script>

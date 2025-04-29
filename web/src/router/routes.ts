@@ -17,7 +17,7 @@ export const dynamicRoutes = [
     path: '/baseTable',
     name: 'baseTable',
     meta: {
-      hidden: true,
+      hidden: false,
       title: '基础列表',
       icon: 'Menu'
     },
@@ -31,24 +31,6 @@ export const dynamicRoutes = [
       icon: 'Menu'
     },
     component: () => import('@/views/clusterTable/clusterTable.vue')
-  },
-  {
-    path: '/projectTable',
-    name: 'projectTable',
-    meta: {
-      title: '项目列表',
-      icon: 'Menu'
-    },
-    component: () => import('@/views/projectTable/projectTable.vue')
-  },
-  {
-    path: '/userTable',
-    name: 'userTable',
-    meta: {
-      title: '用户列表',
-      icon: 'Menu'
-    },
-    component: () => import('@/views/userTable/userTable.vue')
   },
   {
     path: '/cacheView',

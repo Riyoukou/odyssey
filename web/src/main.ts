@@ -4,9 +4,8 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import ElementPlus from 'element-plus'
 import ElementPlusCrx from 'element-plus-crx'
 
-import App from './App.vue'
-import router from './router'
-import '@/api/mock'
+import App from '@/App.vue'
+import router from '@/router'
 
 // css
 import 'element-plus/dist/index.css'
@@ -22,7 +21,6 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 app.use(ElementPlus)
-app.use(ElementPlusCrx)
 app.use(ElementPlusCrx)
 
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {

@@ -5,6 +5,8 @@
   </div>
 </template>
 
-<script setup>
-const value = ref('')
+<script lang="ts" setup>
+import { ref } from 'vue'
+
+const value = ref<string>('')
 </script>

@@ -9,7 +9,7 @@
   </el-config-provider>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import useAppStore from '@/stores/useAppStore'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import en from 'element-plus/es/locale/lang/en'
@@ -18,7 +18,7 @@ import { computed } from 'vue'
 const appStore = useAppStore()
 
 const locale = computed(() => {
-  return { zhCn: zhCn, en: en }[appStore.language]
+  return { zhCn: zhCn, en: en }[appStore.language as 'zhCn' | 'en']
 })
 
 const ElementPlusCrx = {
@@ -31,18 +31,18 @@ const ElementPlusCrx = {
     }
   },
   AgelFormItem: {
-    AgelSelect: function (props) {
+    AgelSelect: function (props: any) {
       return {
         placeholder: '请选择' + props.label
       }
     },
-    ElInput: function (props) {
+    ElInput: function (props: any) {
       return {
         clearable: true,
         placeholder: '请输入' + props.label
       }
     },
-    ElDatePicker: function (props) {
+    ElDatePicker: function (props: any) {
       let valueFormat = 'YYYY-MM-DD'
       let dateType = props?.attrs?.type
       if (dateType == 'datetime' || dateType == 'datetimerange') {
