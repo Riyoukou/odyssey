@@ -77,6 +77,7 @@ const form = reactive({
     form.show = true
     form.title = '编辑集群'
     form.state = 'edit'
+    //form.config = atob(form.config)
     nextTick(() => {
       form.model = { ...row }
     })
