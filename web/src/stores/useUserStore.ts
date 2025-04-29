@@ -37,7 +37,7 @@ export default defineStore('userStore', () => {
       method: 'post',
       data: data
     }).then((res: any) => {
-      userInfo.value = res.result
+      userInfo.value = res.data
       return res
     })
   }

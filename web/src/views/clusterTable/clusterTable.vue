@@ -60,7 +60,7 @@
         <ElFormItem label="集群版本" prop="version">
           <ElInput v-model="editForm.model.version" placeholder="请输入集群版本" />
         </ElFormItem>
-        <ElFormItem label="集群凭证" prop="config":rules="{ required: true, message: '请输入集群凭证', trigger: 'blur' }">
+        <ElFormItem v-if="editForm.state === 'add'" label="集群凭证" prop="config" :rules="{ required: true, message: '请输入集群凭证', trigger: 'blur' }">
           <ElInput v-model="editForm.model.config" placeholder="请输入集群凭证" />
         </ElFormItem>
         <ElFormItem label="描述" prop="description">

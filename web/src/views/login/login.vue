@@ -59,6 +59,7 @@ async function submit() {
       form.loading = false
     })
 }
+
 function pushRegister() {
   router.push({ name: 'register' })
 }
