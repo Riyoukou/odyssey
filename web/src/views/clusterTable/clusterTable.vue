@@ -10,11 +10,12 @@
         <ElButton type="primary" icon="Search" @click="clusterTable.request">查询</ElButton>
       </div>
     </ElForm>
+
     <!-- 按钮条 -->
     <div class="table-bar flex justify-between items-center mb-3">
       <div>
         <ElButton icon="Plus" @click="editForm.toAdd">新增</ElButton>
-        <el-popconfirm title="Are you sure to delete this?"  @confirm="deleteSelected">
+        <el-popconfirm title="Are you sure to delete this?" @confirm="deleteSelected">
           <template #reference>
             <ElButton icon="Delete">删除</ElButton>
           </template>
@@ -25,11 +26,12 @@
         <ElButton icon="Search" round @click="search.show = !search.show"></ElButton>
       </div>
     </div>
+
     <!-- 列表 -->
     <el-table :data="clusterTable.data" style="width: 100%" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" />
-      <el-table-column prop="name" label="集群名称" sortable width="200"/>
-      <el-table-column prop="api_server" label="APIServer" sortable width="200"/>
+      <el-table-column prop="name" label="集群名称" sortable width="200" />
+      <el-table-column prop="api_server" label="APIServer" sortable width="200" />
       <el-table-column prop="region" label="Region" width="150" />
       <el-table-column prop="version" label="集群版本" width="150" />
       <el-table-column prop="description" label="描述" show-overflow-tooltip />
@@ -47,11 +49,12 @@
         :ref="(v: FormInstance | null) => (editForm.ref = v)" 
         :model="editForm.model" 
         label-width="80px"
+        :rules="clusterRules"
       >
-        <ElFormItem label="集群名称" prop="name" :rules="{ required: true, message: '请输入集群名称', trigger: 'blur' }">
+        <ElFormItem label="集群名称" prop="name">
           <ElInput v-model="editForm.model.name" placeholder="请输入集群名称" />
         </ElFormItem>
-        <ElFormItem label="APIServer" prop="api_server" :rules="{ required: true, message: '请输入APIServer', trigger: 'blur' }">
+        <ElFormItem label="APIServer" prop="api_server" >
           <ElInput v-model="editForm.model.api_server" placeholder="请输入APIServer" />
         </ElFormItem>
         <ElFormItem label="Region" prop="region">
@@ -60,7 +63,7 @@
         <ElFormItem label="集群版本" prop="version">
           <ElInput v-model="editForm.model.version" placeholder="请输入集群版本" />
         </ElFormItem>
-        <ElFormItem v-if="editForm.state === 'add'" label="集群凭证" prop="config" :rules="{ required: true, message: '请输入集群凭证', trigger: 'blur' }">
+        <ElFormItem v-if="editForm.state === 'add'" label="集群凭证" prop="config">
           <ElInput v-model="editForm.model.config" placeholder="请输入集群凭证" />
         </ElFormItem>
         <ElFormItem label="描述" prop="description">
@@ -80,9 +83,10 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { ElMessage, type FormInstance } from 'element-plus'
 import http from '@/api'
+import { ru } from 'element-plus/es/locale'
 
 // 搜索表单配置
 const search = reactive({
@@ -96,6 +100,26 @@ const search = reactive({
     description: '',
     config: ''
   } 
+})
+
+const clusterRules = computed(() => {
+  const baseRules = {
+    name: [{ required: true, message: '请输入集群名称', trigger: 'blur' }],
+    api_server: [{ required: true, message: '请输入APIServer', trigger: 'blur' }],
+    region: [],
+    version: [],
+    description: [],
+  }
+
+  // 仅在添加时校验 config（集群凭证）
+  if (editForm.state === 'add') {
+    return {
+      ...baseRules,
+      config: [{ required: true, message: '请输入集群凭证', trigger: 'blur' }]
+    }
+  }
+
+  return baseRules
 })
 
 // 表单配置
@@ -137,7 +161,6 @@ const editForm = reactive({
     })
   }
 })
-
 // 表格配置
 const clusterTable = reactive({
   loading: false,

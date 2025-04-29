@@ -22,6 +22,7 @@
         <ElButton type="primary" icon="Search" @click="baseTable.request">查询</ElButton>
       </div>
     </ElForm>
+
     <!-- 按钮条 -->
     <div class="table-bar flex justify-between items-center mb-3">
       <div>
@@ -33,6 +34,7 @@
         <ElButton icon="Search" round @click="search.show = !search.show"></ElButton>
       </div>
     </div>
+
     <!-- 列表 -->
     <el-table :data="baseTable.data" style="width: 100%">
       <el-table-column type="selection" width="55" />

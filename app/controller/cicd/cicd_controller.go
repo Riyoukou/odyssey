@@ -34,6 +34,8 @@ func HandleCICDFetch(c *gin.Context) {
 		result, err = repository.FetchBuildRecordsByProjectName(c.Query("project"))
 	case "deploy_record":
 		result, err = repository.FetchDeployRecordsByProjectName(c.Query("project"))
+	case "credential":
+		result, err = repository.FetchCredentials()
 	}
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err)
@@ -138,6 +140,12 @@ func HandleCICDCreate(c *gin.Context) {
 			break
 		}
 		err = repository.CreateCodeSource(req)
+	case "credential":
+		var req model.CredentialTable
+		if err = c.ShouldBind(&req); err != nil {
+			break
+		}
+		err = repository.CreateCredential(req)
 	}
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err)
@@ -206,6 +214,8 @@ func HandleCICDDelete(c *gin.Context) {
 		err = repository.DeleteService(intID)
 	case "code_library":
 		err = repository.DeleteCodeLibrary(intID)
+	case "credential":
+		err = repository.DeleteCredential(intID)
 	}
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err)

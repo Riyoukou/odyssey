@@ -8,13 +8,15 @@ import (
 
 // repository_model
 type ClusterTable struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	APIServer   string `json:"api_server"`
-	Config      string `json:"config"`
-	Region      string `json:"region"`
-	Version     string `json:"version"`
-	Description string `json:"description"`
+	ID          int64     `json:"id"`
+	Name        string    `json:"name"`
+	APIServer   string    `json:"api_server"`
+	Config      string    `json:"config"`
+	Region      string    `json:"region"`
+	Version     string    `json:"version"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 func (ClusterTable) TableName() string {
@@ -22,10 +24,12 @@ func (ClusterTable) TableName() string {
 }
 
 type ProjectTable struct {
-	ID       int64          `json:"id"`
-	Name     string         `json:"name"`
-	Env      datatypes.JSON `json:"env"`
-	Clusters datatypes.JSON `json:"clusters"`
+	ID        int64          `json:"id"`
+	Name      string         `json:"name"`
+	Env       datatypes.JSON `json:"env"`
+	Clusters  datatypes.JSON `json:"clusters"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
 }
 
 func (ProjectTable) TableName() string {
@@ -33,11 +37,13 @@ func (ProjectTable) TableName() string {
 }
 
 type EnvTable struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	ProjectName string `json:"project_name"`
-	Type        string `json:"type"`
-	Namespace   string `json:"namespace"`
+	ID          int64     `json:"id"`
+	Name        string    `json:"name"`
+	ProjectName string    `json:"project_name"`
+	Type        string    `json:"type"`
+	Namespace   string    `json:"namespace"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 func (EnvTable) TableName() string {
@@ -51,6 +57,8 @@ type ServiceTable struct {
 	EnvName         string         `json:"env_name"`
 	CodeLibraryName string         `json:"code_library_name"`
 	DeployMap       datatypes.JSON `json:"deploy_map"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
 }
 
 func (ServiceTable) TableName() string {
@@ -58,11 +66,13 @@ func (ServiceTable) TableName() string {
 }
 
 type CodeLibraryTable struct {
-	ID             int64  `json:"id"`
-	Name           string `json:"name"`
-	ProjectName    string `json:"project_name"`
-	URL            string `json:"url"`
-	CodeSourceName string `json:"code_source_name"`
+	ID             int64     `json:"id"`
+	Name           string    `json:"name"`
+	ProjectName    string    `json:"project_name"`
+	URL            string    `json:"url"`
+	CodeSourceName string    `json:"code_source_name"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 func (CodeLibraryTable) TableName() string {
@@ -70,18 +80,20 @@ func (CodeLibraryTable) TableName() string {
 }
 
 type CodeSourceTable struct {
-	ID           int64  `json:"id"`
-	Name         string `json:"name"`
-	URL          string `json:"url"`
-	Type         string `json:"type"`
-	PrivateToken string `json:"private_token"`
+	ID           int64     `json:"id"`
+	Name         string    `json:"name"`
+	URL          string    `json:"url"`
+	Type         string    `json:"type"`
+	PrivateToken string    `json:"private_token"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 func (CodeSourceTable) TableName() string {
 	return "code_sources"
 }
 
-type BuildRecord struct {
+type BuildRecordTable struct {
 	ID          int64     `json:"id"`
 	Name        string    `json:"name"`
 	Env         string    `json:"env"`
@@ -91,9 +103,10 @@ type BuildRecord struct {
 	BuildUser   string    `json:"build_user"`
 	CreatedAt   time.Time `json:"created_at"`
 	Description string    `json:"description"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-func (BuildRecord) TableName() string {
+func (BuildRecordTable) TableName() string {
 	return "build_records"
 }
 
@@ -112,24 +125,26 @@ type ApiCICDBuildRecordService struct {
 	Branch      string `json:"branch"`
 }
 
-type BuildServiceRecord struct {
-	ID              int64  `json:"id"`
-	ServiceName     string `json:"service_name"`
-	ProjectName     string `json:"project_name"`
-	Env             string `json:"env"`
-	Image           string `json:"image"`
-	BuildRecordName string `json:"build_record_name"`
-	BuildURL        string `json:"build_url"`
-	Status          string `json:"status"`
-	Branch          string `json:"branch"`
-	BuildID         int64  `json:"build_id"`
+type BuildServiceRecordTable struct {
+	ID              int64     `json:"id"`
+	ServiceName     string    `json:"service_name"`
+	ProjectName     string    `json:"project_name"`
+	Env             string    `json:"env"`
+	Image           string    `json:"image"`
+	BuildRecordName string    `json:"build_record_name"`
+	BuildURL        string    `json:"build_url"`
+	Status          string    `json:"status"`
+	Branch          string    `json:"branch"`
+	BuildID         int64     `json:"build_id"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
 }
 
-func (BuildServiceRecord) TableName() string {
+func (BuildServiceRecordTable) TableName() string {
 	return "build_service_records"
 }
 
-type DeployRecord struct {
+type DeployRecordTable struct {
 	ID              int64     `json:"id"`
 	Name            string    `json:"name"`
 	Env             string    `json:"env"`
@@ -141,23 +156,38 @@ type DeployRecord struct {
 	ClusterNames    string    `json:"cluster_names"`
 	CreatedAt       time.Time `json:"created_at"`
 	Description     string    `json:"description"`
+	UpdatedAt       time.Time `json:"updated_at"`
 }
 
-func (DeployRecord) TableName() string {
+func (DeployRecordTable) TableName() string {
 	return "deploy_records"
 }
 
-type DeployServiceRecord struct {
-	ID               int64  `json:"id"`
-	ServiceName      string `json:"service_name"`
-	ProjectName      string `json:"project_name"`
-	Env              string `json:"env"`
-	DeployRecordName string `json:"deploy_record_name"`
-	ClusterName      string `json:"cluster_name"`
-	Status           string `json:"status"`
-	Image            string `json:"image"`
+type DeployServiceRecordTable struct {
+	ID               int64     `json:"id"`
+	ServiceName      string    `json:"service_name"`
+	ProjectName      string    `json:"project_name"`
+	Env              string    `json:"env"`
+	DeployRecordName string    `json:"deploy_record_name"`
+	ClusterName      string    `json:"cluster_name"`
+	Status           string    `json:"status"`
+	Image            string    `json:"image"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
 }
 
-func (DeployServiceRecord) TableName() string {
+func (DeployServiceRecordTable) TableName() string {
 	return "deploy_service_records"
+}
+
+type CredentialTable struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
+	Data        string `json:"data"`
+}
+
+func (CredentialTable) TableName() string {
+	return "credentials"
 }

@@ -346,8 +346,8 @@ func UpdateCodeSourceByName(codeSource model.CodeSourceTable) error {
 }
 
 // cicd_build_record
-func FetchBuildRecordsByProjectName(projectName string) ([]model.BuildRecord, error) {
-	var records []model.BuildRecord
+func FetchBuildRecordsByProjectName(projectName string) ([]model.BuildRecordTable, error) {
+	var records []model.BuildRecordTable
 	if err := DB.Where("project_name = ?", projectName).Find(&records).Error; err != nil {
 		return nil, err
 	}
@@ -355,15 +355,15 @@ func FetchBuildRecordsByProjectName(projectName string) ([]model.BuildRecord, er
 	return records, nil
 }
 
-func CreateBuildRecord(buildRecord model.BuildRecord) error {
+func CreateBuildRecord(buildRecord model.BuildRecordTable) error {
 	if err := DB.Create(&buildRecord).Error; err != nil {
 		return fmt.Errorf("failed to create build record: %w", err)
 	}
 	return nil
 }
 
-func GetBuildRecordByID(id int64) (*model.BuildRecord, error) {
-	var record model.BuildRecord
+func GetBuildRecordByID(id int64) (*model.BuildRecordTable, error) {
+	var record model.BuildRecordTable
 	if err := DB.Where("id = ?", id).First(&record).Error; err != nil {
 		return nil, err
 	}
@@ -371,8 +371,8 @@ func GetBuildRecordByID(id int64) (*model.BuildRecord, error) {
 	return &record, nil
 }
 
-func GetBuildRecordByName(name string) (*model.BuildRecord, error) {
-	var record model.BuildRecord
+func GetBuildRecordByName(name string) (*model.BuildRecordTable, error) {
+	var record model.BuildRecordTable
 	if err := DB.Where("name = ?", name).First(&record).Error; err != nil {
 		return nil, err
 	}
@@ -381,15 +381,15 @@ func GetBuildRecordByName(name string) (*model.BuildRecord, error) {
 }
 
 func DeleteBuildRecord(id int64) error {
-	if err := DB.Delete(&model.BuildRecord{}, id).Error; err != nil {
+	if err := DB.Delete(&model.BuildRecordTable{}, id).Error; err != nil {
 		return fmt.Errorf("failed to delete build record: %w", err)
 	}
 
 	return nil
 }
 
-func UpdateBuildRecord(buildRecord model.BuildRecord) error {
-	if err := DB.Model(&model.BuildRecord{}).Where("id = ?", buildRecord.ID).Updates(buildRecord).Error; err != nil {
+func UpdateBuildRecord(buildRecord model.BuildRecordTable) error {
+	if err := DB.Model(&model.BuildRecordTable{}).Where("id = ?", buildRecord.ID).Updates(buildRecord).Error; err != nil {
 		return fmt.Errorf("failed to update build record: %w", err)
 	}
 
@@ -397,8 +397,8 @@ func UpdateBuildRecord(buildRecord model.BuildRecord) error {
 }
 
 // cicd_build_service_record
-func GetBuildServiceRecordsByBuildRecordName(buildRecordName string) ([]model.BuildServiceRecord, error) {
-	var records []model.BuildServiceRecord
+func GetBuildServiceRecordsByBuildRecordName(buildRecordName string) ([]model.BuildServiceRecordTable, error) {
+	var records []model.BuildServiceRecordTable
 	if err := DB.Where("build_record_name = ?", buildRecordName).Find(&records).Error; err != nil {
 		return nil, err
 	}
@@ -406,23 +406,23 @@ func GetBuildServiceRecordsByBuildRecordName(buildRecordName string) ([]model.Bu
 	return records, nil
 }
 
-func CreateBuildServiceRecord(buildServiceRecord model.BuildServiceRecord) error {
+func CreateBuildServiceRecord(buildServiceRecord model.BuildServiceRecordTable) error {
 	if err := DB.Create(&buildServiceRecord).Error; err != nil {
 		return fmt.Errorf("failed to create build service record: %w", err)
 	}
 	return nil
 }
 
-func UpdateBuildServiceRecord(buildServiceRecord model.BuildServiceRecord) error {
-	if err := DB.Model(&model.BuildServiceRecord{}).Where("id = ?", buildServiceRecord.ID).Updates(buildServiceRecord).Error; err != nil {
+func UpdateBuildServiceRecord(buildServiceRecord model.BuildServiceRecordTable) error {
+	if err := DB.Model(&model.BuildServiceRecordTable{}).Where("id = ?", buildServiceRecord.ID).Updates(buildServiceRecord).Error; err != nil {
 		return fmt.Errorf("failed to update build service record: %w", err)
 	}
 	return nil
 }
 
 // cicd_deploy_record
-func FetchDeployRecordsByProjectName(projectName string) ([]model.DeployRecord, error) {
-	var records []model.DeployRecord
+func FetchDeployRecordsByProjectName(projectName string) ([]model.DeployRecordTable, error) {
+	var records []model.DeployRecordTable
 	if err := DB.Where("project_name = ?", projectName).Find(&records).Error; err != nil {
 		return nil, err
 	}
@@ -430,15 +430,15 @@ func FetchDeployRecordsByProjectName(projectName string) ([]model.DeployRecord, 
 	return records, nil
 }
 
-func CreateDeployRecord(deployRecord model.DeployRecord) error {
+func CreateDeployRecord(deployRecord model.DeployRecordTable) error {
 	if err := DB.Create(&deployRecord).Error; err != nil {
 		return fmt.Errorf("failed to create deploy record: %w", err)
 	}
 	return nil
 }
 
-func GetDeployRecordByID(id int64) (*model.DeployRecord, error) {
-	var record model.DeployRecord
+func GetDeployRecordByID(id int64) (*model.DeployRecordTable, error) {
+	var record model.DeployRecordTable
 	if err := DB.Where("id = ?", id).First(&record).Error; err != nil {
 		return nil, err
 	}
@@ -446,8 +446,8 @@ func GetDeployRecordByID(id int64) (*model.DeployRecord, error) {
 	return &record, nil
 }
 
-func GetDeployRecordByName(name string) (*model.DeployRecord, error) {
-	var record model.DeployRecord
+func GetDeployRecordByName(name string) (*model.DeployRecordTable, error) {
+	var record model.DeployRecordTable
 	if err := DB.Where("name = ?", name).First(&record).Error; err != nil {
 		return nil, err
 	}
@@ -455,8 +455,8 @@ func GetDeployRecordByName(name string) (*model.DeployRecord, error) {
 	return &record, nil
 }
 
-func GetDeployRecordByBuildRecordName(name string) (*model.DeployRecord, error) {
-	var record model.DeployRecord
+func GetDeployRecordByBuildRecordName(name string) (*model.DeployRecordTable, error) {
+	var record model.DeployRecordTable
 	if err := DB.Where("build_record_name = ?", name).First(&record).Error; err != nil {
 		return nil, err
 	}
@@ -465,15 +465,15 @@ func GetDeployRecordByBuildRecordName(name string) (*model.DeployRecord, error) 
 }
 
 // cicd_deploy_service_record
-func CreateDeployServiceRecord(deployServiceRecord model.DeployServiceRecord) error {
+func CreateDeployServiceRecord(deployServiceRecord model.DeployServiceRecordTable) error {
 	if err := DB.Create(&deployServiceRecord).Error; err != nil {
 		return fmt.Errorf("failed to create deploy service record: %w", err)
 	}
 	return nil
 }
 
-func GetDeployServiceRecordsByDeployRecordName(deployRecordName string) ([]model.DeployServiceRecord, error) {
-	var records []model.DeployServiceRecord
+func GetDeployServiceRecordsByDeployRecordName(deployRecordName string) ([]model.DeployServiceRecordTable, error) {
+	var records []model.DeployServiceRecordTable
 	if err := DB.Where("deploy_record_name = ?", deployRecordName).Find(&records).Error; err != nil {
 		return nil, err
 	}
@@ -481,9 +481,42 @@ func GetDeployServiceRecordsByDeployRecordName(deployRecordName string) ([]model
 	return records, nil
 }
 
-func UpdateDeployServiceRecordsByID(id int64, deployServiceRecord model.DeployServiceRecord) error {
-	if err := DB.Model(&model.DeployServiceRecord{}).Where("id = ?", id).Updates(deployServiceRecord).Error; err != nil {
+func UpdateDeployServiceRecordsByID(id int64, deployServiceRecord model.DeployServiceRecordTable) error {
+	if err := DB.Model(&model.DeployServiceRecordTable{}).Where("id = ?", id).Updates(deployServiceRecord).Error; err != nil {
 		return fmt.Errorf("failed to update deploy service record: %w", err)
+	}
+
+	return nil
+}
+
+// cicd_crendential
+func FetchCredentials() ([]model.CredentialTable, error) {
+	var credentials []model.CredentialTable
+	if err := DB.Find(&credentials).Error; err != nil {
+		return nil, err
+	}
+
+	return credentials, nil
+}
+
+func CreateCredential(credential model.CredentialTable) error {
+	if err := DB.Where("name = ?", credential.Name).
+		First(&model.CredentialTable{}).Error; err == nil {
+		logger.Errorf("Credential already exists: name=%s", credential.Name)
+		return err
+	}
+	if err := DB.Create(&credential).Error; err != nil {
+		logger.Errorf("Failed to create credential: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func DeleteCredential(credentialID int64) error {
+	if err := DB.Delete(&model.CredentialTable{}, credentialID).Error; err != nil {
+		logger.Errorf("Failed to delete credential: %v", err)
+		return err
 	}
 
 	return nil

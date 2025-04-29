@@ -17,7 +17,7 @@ export const dynamicRoutes = [
     path: '/baseTable',
     name: 'baseTable',
     meta: {
-      hidden: false,
+      hidden: true,
       title: '基础列表',
       icon: 'Menu'
     },
@@ -31,6 +31,15 @@ export const dynamicRoutes = [
       icon: 'Menu'
     },
     component: () => import('@/views/clusterTable/clusterTable.vue')
+  },
+  {
+    path: '/credentialTable',
+    name: 'credentialTable',
+    meta: {
+      title: '凭证列表',
+      icon: 'Menu'
+    },
+    component: () => import('@/views/credentialTable/credentialTable.vue')
   },
   {
     path: '/cacheView',
