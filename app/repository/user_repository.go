@@ -90,12 +90,13 @@ func UpdateUser(user model.UserTable) error {
 func UpdateUserPassword(user model.UserUpdatePassword) error {
 	var userInfo model.UserTable
 
-	if user.NewPassword == user.OldPassword {
-		return errors.New("新密码不能与旧密码相同")
-	}
-
 	if err := DB.Where("id = ?", user.ID).First(&userInfo).Error; err != nil {
 		return errors.New("用户不存在")
+	}
+
+	// 校验旧密码
+	if err := bcrypt.CompareHashAndPassword([]byte(userInfo.Password), []byte(user.NewPassword)); err == nil {
+		return errors.New("新密码不能与旧密码相同")
 	}
 
 	// 校验旧密码

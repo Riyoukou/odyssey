@@ -34,6 +34,7 @@
       <el-table-column prop="email" label="邮箱" sortable width="200" />
       <el-table-column prop="phone" label="手机号" width="150" />
       <el-table-column prop="role" label="角色" width="150" />
+      <el-table-column prop="type" label="类型" width="150" />
       <el-table-column prop="last_login" label="最后登陆时间" show-overflow-tooltip />
       <el-table-column label="操作" fixed="right" width="120">
         <template #default="{ row }">
@@ -70,9 +71,6 @@
           </ElFormItem>
           <ElFormItem label="手机号" prop="phone">
             <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.phone" placeholder="请输入手机号" />
-          </ElFormItem>
-          <ElFormItem label="角色" prop="role">
-            <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.role" placeholder="请输入角色" />
           </ElFormItem>
         </template>
       </ElForm>
@@ -199,7 +197,7 @@ const userTable = reactive({
   },
   create: (form: any) => {
     userTable.loading = true
-    http.post(import.meta.env.VITE_APP_BASE_URL + `/user/create/user`, form).then((res: any) => {
+    http.post(import.meta.env.VITE_APP_BASE_URL + `/user/register`, form).then((res: any) => {
       userTable.loading = false
       userTable.request()
       ElMessage.success('新增成功')
