@@ -15,3 +15,9 @@ type UserTable struct {
 func (UserTable) TableName() string {
 	return "users"
 }
+
+type UserUpdatePassword struct {
+	ID          int64  `json:"id"`
+	OldPassword string `json:"old_password"`
+	NewPassword string `json:"new_password"`
+}

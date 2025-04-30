@@ -14,17 +14,17 @@ import (
 
 func HandleUserFetch(c *gin.Context) {
 	var (
-		err    error
-		result interface{}
+		err  error
+		data interface{}
 	)
 	switch c.Param("type") {
 	case "user":
-		result, err = repository.FetchUsers()
+		data, err = repository.FetchUsers()
 		if err != nil {
 			response.Error(c, http.StatusBadRequest, err)
 			return
 		}
-		response.Success(c, result, fmt.Sprintf("%s fetched successfully", c.Param("type")))
+		response.Success(c, data, fmt.Sprintf("%s fetched successfully", c.Param("type")))
 	}
 }
 func HandleUserGet(c *gin.Context) {
@@ -56,7 +56,26 @@ func HandleUserDelete(c *gin.Context) {
 	}
 }
 func HandleUserUpdate(c *gin.Context) {
-
+	var err error
+	switch c.Param("type") {
+	case "user":
+		var req model.UserTable
+		if err = c.ShouldBind(&req); err != nil {
+			break
+		}
+		err = repository.UpdateUser(req)
+	case "user_password":
+		var req model.UserUpdatePassword
+		if err = c.ShouldBind(&req); err != nil {
+			break
+		}
+		err = repository.UpdateUserPassword(req)
+	}
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, err)
+		return
+	}
+	response.Success(c, nil, fmt.Sprintf("%s updated successfully", c.Param("type")))
 }
 
 func HandleUserLogin(c *gin.Context) {

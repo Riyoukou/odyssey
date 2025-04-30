@@ -79,7 +79,7 @@
         </ElFormItem>
         <ElFormItem label="凭证名称" prop="credential_name">
           <ElSelect v-if="editForm.state !== 'view'" v-model="editForm.model.credential_name" placeholder="请选择工具凭证" @focus="cicdToolTable.selectConfig">
-            <ElOption  v-for="item in cicdToolTable.credentialData" :key="item.name" :label="item.name" :value="item.name" />
+            <ElOption  v-for="item in cicdToolTable.credentialData" :key="item.name" :label="item.type+'/'+item.name" :value="item.name" />
           </ElSelect>
           <ElInput disabled v-else v-model="editForm.model.credential_name" />
         </ElFormItem>
@@ -116,7 +116,7 @@ const search = reactive({
 })
 
 const clusterRules = computed(() => {
-  const baseRules = {
+  return {
     name: [{ required: true, message: '请输入集群名称', trigger: 'blur' }],
     type: [{ required: true, message: '请选择工具类型', trigger: 'blur' }],
     url: [{ required: true, message: '请输入工具地址', trigger: 'blur' }],
@@ -124,7 +124,6 @@ const clusterRules = computed(() => {
     credential_name: [{ required: true, message: '请选择凭证名称', trigger: 'blur' }],
     description: [],
   }
-  return baseRules
 })
 
 // 表单配置

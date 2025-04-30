@@ -28,6 +28,7 @@ func SetupRouter(r *gin.Engine) {
 		_user.POST("login", user.HandleUserLogin)
 		_user.POST("register", user.HandleUserRegister)
 		_user.GET("fetch/:type", user.HandleUserFetch)
+		_user.POST("update/:type", user.HandleUserUpdate)
 		_user.DELETE("delete/:type/:id", user.HandleUserDelete)
 	}
 

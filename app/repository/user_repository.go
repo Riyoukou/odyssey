@@ -79,3 +79,40 @@ func DeleteUser(userID int64) error {
 
 	return nil
 }
+
+func UpdateUser(user model.UserTable) error {
+	if err := DB.Save(&user).Error; err != nil {
+		return errors.New("数据库更新用户信息失败")
+	}
+	return nil
+}
+
+func UpdateUserPassword(user model.UserUpdatePassword) error {
+	var userInfo model.UserTable
+
+	if user.NewPassword == user.OldPassword {
+		return errors.New("新密码不能与旧密码相同")
+	}
+
+	if err := DB.Where("id = ?", user.ID).First(&userInfo).Error; err != nil {
+		return errors.New("用户不存在")
+	}
+
+	// 校验旧密码
+	if err := bcrypt.CompareHashAndPassword([]byte(userInfo.Password), []byte(user.OldPassword)); err != nil {
+		return errors.New("旧密码错误")
+	}
+
+	// 更新密码
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return errors.New("加密新密码失败")
+	}
+	userInfo.Password = string(hashedPassword)
+
+	if err := DB.Save(&userInfo).Error; err != nil {
+		return errors.New("数据库更新密码失败")
+	}
+	return nil
+
+}

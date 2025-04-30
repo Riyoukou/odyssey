@@ -166,7 +166,6 @@ const editForm = reactive({
         credential.data = JSON.stringify({ username, password })
       }  
       editForm.show = false
-      console.log(credential)
       credentialTable.create(credential)
     })
   }
