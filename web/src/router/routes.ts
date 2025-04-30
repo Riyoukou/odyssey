@@ -28,7 +28,8 @@ export const dynamicRoutes = [
     name: 'clusterTable',
     meta: {
       title: '集群列表',
-      icon: 'Menu'
+      icon: 'Menu',
+      roles: ['admin','user']
     },
     component: () => import('@/views/clusterTable/clusterTable.vue')
   },
@@ -37,7 +38,8 @@ export const dynamicRoutes = [
     name: 'credentialTable',
     meta: {
       title: '凭证列表',
-      icon: 'Menu'
+      icon: 'Menu',
+      roles: ['admin','user']
     },
     component: () => import('@/views/credentialTable/credentialTable.vue')
   },
@@ -46,7 +48,8 @@ export const dynamicRoutes = [
     name: 'cicdToolTable',
     meta: {
       title: 'CICD工具列表',
-      icon: 'Menu'
+      icon: 'Menu',
+      roles: ['admin','user']
     },
     component: () => import('@/views/cicdToolTable/cicdToolTable.vue')
   },
@@ -55,7 +58,8 @@ export const dynamicRoutes = [
     name: 'userTable',
     meta: {
       title: '用户列表',
-      icon: 'Menu'
+      icon: 'Menu',
+      roles: ['admin','user']
     },
     component: () => import('@/views/userTable/userTable.vue')
   },
@@ -63,6 +67,7 @@ export const dynamicRoutes = [
     path: '/cacheView',
     name: 'cacheView',
     meta: {
+      hidden: true,
       title: '缓存页面',
       icon: 'Discount',
       keepAlive: true
@@ -73,6 +78,7 @@ export const dynamicRoutes = [
     path: '/roles',
     name: 'roles',
     meta: {
+      hidden: true,
       title: '权限相关',
       icon: 'UserFilled'
     },
@@ -144,6 +150,7 @@ export const dynamicRoutes = [
     name: 'menu',
     redirect: '/menu/menu-1',
     meta: {
+      hidden: true,
       title: '多级菜单',
       icon: 'Grid'
     },

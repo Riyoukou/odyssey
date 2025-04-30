@@ -14,7 +14,9 @@ router.beforeEach((to) => {
   const userStore = useUserStore()
 
   const isWhitelist = whitelist.includes(to.path)
-  const hasRole = meta.roles ? meta.roles.includes(userStore.role) : true
+  const hasRole = Array.isArray(meta.roles)
+    ? meta.roles.includes(userStore.role)
+    : true
   const hasToken = userStore.token !== ''
 
   if (!hasToken && !isWhitelist) {
