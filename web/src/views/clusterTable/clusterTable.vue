@@ -52,19 +52,22 @@
         :rules="clusterRules"
       >
         <ElFormItem label="集群名称" prop="name">
-          <ElInput v-model="editForm.model.name" placeholder="请输入集群名称" />
+          <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.name" placeholder="请输入集群名称" />
         </ElFormItem>
         <ElFormItem label="APIServer" prop="api_server" >
-          <ElInput v-model="editForm.model.api_server" placeholder="请输入APIServer" />
+          <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.api_server" placeholder="请输入APIServer" />
         </ElFormItem>
         <ElFormItem label="Region" prop="region">
-          <ElInput v-model="editForm.model.region" placeholder="请输入Region" />
+          <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.region" placeholder="请输入Region" />
         </ElFormItem>
         <ElFormItem label="集群版本" prop="version">
-          <ElInput v-model="editForm.model.version" placeholder="请输入集群版本" />
+          <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.version" placeholder="请输入集群版本" />
         </ElFormItem>
-        <ElFormItem v-if="editForm.state === 'add'" label="集群凭证" prop="config">
-          <ElInput v-model="editForm.model.config" placeholder="请输入集群凭证" />
+        <ElFormItem label="集群凭证" prop="config">
+          <ElSelect v-if="editForm.state !== 'view'" v-model="editForm.model.config" placeholder="请选择集群凭证">
+            <ElOption  v-for="item in clusterTable.credentialData" :key="item.name" :label="item.name" :value="item.name" />
+          </ElSelect>
+          <ElInput disabled v-else v-model="editForm.model.config" placeholder="请输入集群凭证" />
         </ElFormItem>
         <ElFormItem label="描述" prop="description">
           <ElInput
@@ -72,11 +75,13 @@
             type="textarea"
             :rows="5"
             placeholder="请输入描述"
+            :disabled="editForm.state === 'view'"
           />
         </ElFormItem>
       </ElForm>
       <template #footer>
-        <ElButton v-if="editForm.state !== 'view'" type="primary" @click="editForm.submit">提交</ElButton>
+        <ElButton v-if="editForm.state === 'add'" type="primary" @click="editForm.submit">提交</ElButton>
+        <ElButton v-else-if="editForm.state === 'edit'" type="primary" @click="editForm.editSubmit">提交</ElButton>
       </template>
     </ElDialog>
   </div>
@@ -86,7 +91,6 @@
 import { ref, reactive, computed } from 'vue'
 import { ElMessage, type FormInstance } from 'element-plus'
 import http from '@/api'
-import { ru } from 'element-plus/es/locale'
 
 // 搜索表单配置
 const search = reactive({
@@ -140,12 +144,14 @@ const editForm = reactive({
     editForm.show = true
     editForm.title = '新增集群'
     editForm.state = 'add'
+    clusterTable.selectConfig()
     editForm.ref?.resetFields()
   },
   toEdit: (row: any) => {
     editForm.show = true
     editForm.title = '编辑集群'
     editForm.state = 'edit'
+    clusterTable.selectConfig()
     editForm.model = { ...row }
   },
   toView: (row: any) => {
@@ -158,6 +164,14 @@ const editForm = reactive({
     editForm.ref?.validate().then(() => {
       editForm.show = false
       clusterTable.create(editForm.model)
+      editForm.ref?.resetFields()
+    })
+  },
+  editSubmit: () => {
+    editForm.ref?.validate().then(() => {
+      editForm.show = false
+      clusterTable.edit(editForm.model)
+      editForm.ref?.resetFields()
     })
   }
 })
@@ -166,6 +180,7 @@ const clusterTable = reactive({
   loading: false,
   border: true,
   data: [],
+  credentialData:[],
   request: () => {
     clusterTable.loading = true
     http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/cluster`).then((res: any) => {
@@ -199,6 +214,13 @@ const clusterTable = reactive({
       }else{
         ElMessage.error('删除失败:'+ res.message)
       }
+    })
+  },
+  selectConfig: () => {
+    clusterTable.loading = true
+    http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/credential`).then((res: any) => {
+      clusterTable.credentialData = res.data
+      clusterTable.loading = false
     })
   }
 })

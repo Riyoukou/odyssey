@@ -34,37 +34,36 @@
       <el-table-column label="操作" fixed="right" width="120">
         <template #default="{ row }">
           <el-button link type="primary" @click="editForm.toView(row)">查看</el-button>
-          <el-divider direction="vertical" />
-          <el-button link type="primary" @click="editForm.toEdit(row)">编辑</el-button>
         </template>
       </el-table-column>
     </el-table>
     <ElDialog v-model="editForm.show" :title="editForm.title" width="800px" top="10vh">
       <ElForm :ref="(v: FormInstance | null) => (editForm.ref = v)" :model="editForm.model" label-width="80px" :rules="credentialRules">
         <ElFormItem label="凭证名称" prop="name">
-          <ElInput v-model="editForm.model.name" placeholder="请输入凭证名称" />
+          <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.name" placeholder="请输入凭证名称" />
         </ElFormItem>
         <ElFormItem label="凭证类型" prop="type">
-          <ElSelect v-model="editForm.model.type" placeholder="请选择凭证类型">
+          <ElSelect v-if="editForm.state !== 'view'" v-model="editForm.model.type" placeholder="请选择凭证类型">
             <ElOption label="SSH 密钥" value="ssh" />
             <ElOption label="API Token" value="token" />
             <ElOption label="集群凭证" value="cluster_credential" />
             <ElOption label="用户名密码" value="username_password" />
           </ElSelect>
+          <ElInput v-else v-model="editForm.model.type" placeholder="请选择凭证类型" disabled />
         </ElFormItem>
         <ElFormItem label="凭证内容" prop="data">
           <!-- 用户名密码形式 -->
           <template v-if="editForm.model.type === 'username_password'">
-            <ElInput v-model="editForm.model.username" placeholder="请输入用户名" style="margin-bottom: 8px" />
-            <ElInput v-model="editForm.model.password" placeholder="请输入密码" show-password />
+            <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.username" placeholder="请输入用户名" style="margin-bottom: 8px" />
+            <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.password" placeholder="请输入密码" show-password />
           </template>
           <!-- 其他类型 -->
           <template v-else>
-            <ElInput v-model="editForm.model.data" placeholder="请输入凭证内容" type="textarea" :rows="4" />
+            <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.data" placeholder="请输入凭证内容" show-password  />
           </template>
         </ElFormItem>
         <ElFormItem label="描述" prop="description">
-          <ElInput v-model="editForm.model.description" type="textarea" :rows="5" placeholder="请输入描述" />
+          <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.description" type="textarea" :rows="5" placeholder="请输入描述" />
         </ElFormItem>
       </ElForm>
       <template #footer>
@@ -123,16 +122,22 @@ const editForm = reactive({
     password: ''
   } ,
   toAdd: () => {
+    editForm.ref?.resetFields()
     editForm.show = true
     editForm.title = '新增凭证'
     editForm.state = 'add'
-    editForm.ref?.resetFields()
   },
   toView: (row: any) => {
     editForm.show = true
     editForm.title = '查看凭证'
     editForm.state = 'view'
     editForm.model = { ...row }
+    if (editForm.model.type === 'username_password') {
+      editForm.model.username =  JSON.parse(atob(row.data)).username
+      editForm.model.password =  JSON.parse(atob(row.data)).password
+    } else {
+      editForm.model.data = atob(row.data)
+    }
   },
   submit: () => {
     editForm.ref?.validate().then(() => {
@@ -143,6 +148,7 @@ const editForm = reactive({
       }  
       editForm.show = false
       credentialTable.create(credential)
+      editForm.ref?.resetFields()
     })
   }
 })

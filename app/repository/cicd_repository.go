@@ -26,8 +26,6 @@ func CreateCluster(cluster model.ClusterTable) error {
 		return err
 	}
 
-	cluster.Config = base64.StdEncoding.EncodeToString([]byte(cluster.Config))
-
 	if err := DB.Create(&cluster).Error; err != nil {
 		logger.Errorf("Failed to create cluster: %v", err)
 		return err
@@ -51,15 +49,6 @@ func GetClusterByName(name string) (model.ClusterTable, error) {
 		First(&cluster).Error; err != nil {
 		return model.ClusterTable{}, err
 	}
-
-	// Base64 解码 kubeconfig
-	kubeconfigBytes, err := base64.StdEncoding.DecodeString(cluster.Config)
-	if err != nil {
-		return model.ClusterTable{}, fmt.Errorf("invalid kubeconfig encoding: %w", err)
-	}
-
-	cluster.Config = string(kubeconfigBytes)
-
 	return cluster, nil
 }
 
@@ -505,11 +494,54 @@ func CreateCredential(credential model.CredentialTable) error {
 		logger.Errorf("Credential already exists: name=%s", credential.Name)
 		return err
 	}
+
+	credential.Data = base64.StdEncoding.EncodeToString([]byte(credential.Data))
+
 	if err := DB.Create(&credential).Error; err != nil {
 		logger.Errorf("Failed to create credential: %v", err)
 		return err
 	}
 
+	return nil
+}
+
+func GetCredentialByName(name string) (model.CredentialTable, error) {
+	var credential model.CredentialTable
+	if err := DB.Where("name = ?", name).
+		First(&credential).Error; err != nil {
+		return model.CredentialTable{}, err
+	}
+
+	// Base64 解码数据
+	dataBytes, err := base64.StdEncoding.DecodeString(credential.Data)
+	if err != nil {
+		return model.CredentialTable{}, fmt.Errorf("invalid credential data encoding: %w", err)
+	}
+	credential.Data = string(dataBytes)
+	return credential, nil
+}
+
+/*
+	// 模拟字符串
+	jsonStr := `{"username":"111","password":"111"}`
+
+	// 用 map[string]string 接收
+	var data map[string]string
+	err := json.Unmarshal([]byte(jsonStr), &data)
+	if err != nil {
+		panic(err)
+	}
+
+	// 使用 data["username"]
+	fmt.Println("用户名是:", data["username"])
+*/
+
+func UpdateCredentialData(credential model.CredentialTable) error {
+	credential.Data = base64.StdEncoding.EncodeToString([]byte(credential.Data))
+	if err := DB.Model(&model.CredentialTable{}).Where("id = ?", credential.ID).Update("data", credential.Data).Error; err != nil {
+		logger.Errorf("Failed to update credential data: %v", err)
+		return err
+	}
 	return nil
 }
 

@@ -66,6 +66,8 @@ func HandleCICDGet(c *gin.Context) {
 		result, err = repository.GetBuildServiceRecordsByBuildRecordName(c.Query("build_record"))
 	case "deploy_service_record":
 		result, err = repository.GetDeployServiceRecordsByDeployRecordName(c.Query("deploy_record"))
+	case "credential":
+		result, err = repository.GetCredentialByName(c.Query("name"))
 	}
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err)
