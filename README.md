@@ -7,7 +7,10 @@ VUE3:使用Vue3+TypeScript+Vite
 
 本地调试指南:
 ```
-##数据库准备，导入initsql中的表结构，启动一个mysql和redis(如下配置无需更改dev配置文件)
+##数据库准备
+#启动一个mysql和redis(如下配置无需更改dev配置文件)
+#mysql中创建odyssey数据库
+#导入initsql中的表结构
 vim /etc/host/
 127.0.0.1 odyssey.mysql ##127.0.0.1改为自己数据库的地址
 127.0.0.1 odyssey.redis ##127.0.0.1改为自己数据库的地址
