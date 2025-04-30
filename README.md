@@ -20,6 +20,7 @@ GO_ENV=dev go run cmd/server/main.go
 ##启动后端后尝试
 curl 127.0.0.1:8000/man
 ##前端调试
+#默认用户名/密码:admin/123,user/123
 pnpm install
 cd web && npm run dev
 ```
