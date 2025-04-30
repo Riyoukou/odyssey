@@ -44,22 +44,28 @@
         </ElFormItem>
         <ElFormItem label="凭证类型" prop="type">
           <ElSelect v-if="editForm.state !== 'view'" v-model="editForm.model.type" placeholder="请选择凭证类型">
-            <ElOption label="SSH 密钥" value="ssh" />
-            <ElOption label="API Token" value="token" />
-            <ElOption label="集群凭证" value="cluster_credential" />
-            <ElOption label="用户名密码" value="username_password" />
+            <ElOption label="无" value="none" />
+            <ElOption label="Token" value="token" />
+            <ElOption label="KubeConfig" value="kube_config" />
+            <ElOption label="用户名密码" value="basic" />
           </ElSelect>
           <ElInput v-else v-model="editForm.model.type" placeholder="请选择凭证类型" disabled />
         </ElFormItem>
         <ElFormItem label="凭证内容" prop="data">
           <!-- 用户名密码形式 -->
-          <template v-if="editForm.model.type === 'username_password'">
+          <template v-if="editForm.model.type === 'basic'">
             <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.username" placeholder="请输入用户名" style="margin-bottom: 8px" />
             <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.password" placeholder="请输入密码" show-password />
           </template>
+          <template v-else-if="editForm.model.type === 'none'">
+          </template>
           <!-- 其他类型 -->
-          <template v-else>
-            <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.data" placeholder="请输入凭证内容" show-password  />
+          <template v-else-if="editForm.model.type === 'token' ">
+            <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.data" placeholder="请输入Token内容" show-password />
+          </template>
+          <template v-else-if="editForm.model.type === 'kube_config' ">
+            <ElInput v-if="editForm.state !== 'view'" v-model="editForm.model.data" placeholder="请输入凭证内容" type="textarea" :rows="5" />
+            <ElInput v-else :disabled="editForm.state === 'view'" v-model="editForm.model.data" placeholder="请输入凭证内容" show-password disable/>
           </template>
         </ElFormItem>
         <ElFormItem label="描述" prop="description">
@@ -91,12 +97,17 @@ const search = reactive({
 })
 
 const credentialRules = computed(() => {
-  if (editForm.model.type === 'username_password') {
+  if (editForm.model.type === 'basic') {
     return {
       name: [{ required: true, message: '请输入凭证名称', trigger: 'blur' }],
       type: [{ required: true, message: '请选择凭证类型', trigger: 'change' }],
       username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
       password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+    }
+  } else if (editForm.model.type === 'none') {
+    return {
+      name: [{ required: true, message: '请输入凭证名称', trigger: 'blur' }],
+      type: [{ required: true, message: '请选择凭证类型', trigger: 'blur' }],
     }
   } else {
     return {
@@ -126,13 +137,21 @@ const editForm = reactive({
     editForm.show = true
     editForm.title = '新增凭证'
     editForm.state = 'add'
+    editForm.model = {
+      name: '',
+      type: '',
+      description: '',
+      data: '',
+      username: '',
+      password: ''
+    }
   },
   toView: (row: any) => {
     editForm.show = true
     editForm.title = '查看凭证'
     editForm.state = 'view'
     editForm.model = { ...row }
-    if (editForm.model.type === 'username_password') {
+    if (editForm.model.type === 'basic') {
       editForm.model.username =  JSON.parse(atob(row.data)).username
       editForm.model.password =  JSON.parse(atob(row.data)).password
     } else {
@@ -143,12 +162,12 @@ const editForm = reactive({
     editForm.ref?.validate().then(() => {
       const { username, password, ...credential } = editForm.model
       // 如果是用户名密码类型，打包到 data 字段
-      if (editForm.model.type === 'username_password') {
+      if (editForm.model.type === 'basic') {
         credential.data = JSON.stringify({ username, password })
       }  
       editForm.show = false
+      console.log(credential)
       credentialTable.create(credential)
-      editForm.ref?.resetFields()
     })
   }
 })
@@ -169,8 +188,8 @@ const credentialTable = reactive({
     credentialTable.loading = true
     http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/create/credential`, form).then((res: any) => {
       credentialTable.loading = false
-      ElMessage.success('新增成功')
       credentialTable.request()
+      ElMessage.success('创建成功')
     })
   },
   delete: (form: any) => {
@@ -178,11 +197,7 @@ const credentialTable = reactive({
     http.delete(import.meta.env.VITE_APP_BASE_URL + `/cicd/delete/credential/${form.id}`).then((res: any) => {
       credentialTable.loading = false
       credentialTable.request()
-      if (res.status === 200){
-        ElMessage.success('删除成功')
-      }else{
-        ElMessage.error('删除失败:'+ res.message)
-      }
+      ElMessage.success('删除成功')
     })
   }
 })

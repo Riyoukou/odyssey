@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Riyoukou/odyssey/app/model"
+	"github.com/Riyoukou/odyssey/app/utils"
 	"github.com/Riyoukou/odyssey/pkg/logger"
 )
 
@@ -518,6 +519,7 @@ func GetCredentialByName(name string) (model.CredentialTable, error) {
 		return model.CredentialTable{}, fmt.Errorf("invalid credential data encoding: %w", err)
 	}
 	credential.Data = string(dataBytes)
+	utils.CreateKubernetesClientset(credential.Data)
 	return credential, nil
 }
 
@@ -551,5 +553,54 @@ func DeleteCredential(credentialID int64) error {
 		return err
 	}
 
+	return nil
+}
+
+// cicd_tool
+func FetchCICDTools() ([]model.CICDToolTable, error) {
+	var tools []model.CICDToolTable
+	if err := DB.Find(&tools).Error; err != nil {
+		return nil, err
+	}
+	return tools, nil
+}
+
+func CreateCICDTool(tool model.CICDToolTable) error {
+	if err := DB.Where("name = ?", tool.Name).
+		First(&model.CICDToolTable{}).Error; err == nil {
+		logger.Errorf("CICD tool already exists: name=%s", tool.Name)
+		return err
+	}
+
+	if err := DB.Create(&tool).Error; err != nil {
+		logger.Errorf("Failed to create CICD tool: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func GetCICDToolByName(name string) (model.CICDToolTable, error) {
+	var tool model.CICDToolTable
+	if err := DB.Where("name = ?", name).
+		First(&tool).Error; err != nil {
+		return model.CICDToolTable{}, err
+	}
+	return tool, nil
+}
+
+func UpdateCICDTool(tool model.CICDToolTable) error {
+	if err := DB.Model(&model.CICDToolTable{}).Where("id = ?", tool.ID).Updates(tool).Error; err != nil {
+		logger.Errorf("Failed to update CICD tool: %v", err)
+		return err
+	}
+	return nil
+}
+
+func DeleteCICDTool(toolID int64) error {
+	if err := DB.Delete(&model.CICDToolTable{}, toolID).Error; err != nil {
+		logger.Errorf("Failed to delete CICD tool: %v", err)
+		return err
+	}
 	return nil
 }

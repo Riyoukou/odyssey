@@ -7,7 +7,7 @@
       </ElFormItem>
       <div class="flex justify-center mb-3">
         <ElButton icon="RefreshRight" @click="() => search.ref?.resetFields()">重置</ElButton>
-        <ElButton type="primary" icon="Search" @click="clusterTable.request">查询</ElButton>
+        <ElButton type="primary" icon="Search" @click="cicdToolTable.request">查询</ElButton>
       </div>
     </ElForm>
 
@@ -22,18 +22,19 @@
         </el-popconfirm>
       </div>
       <div>
-        <ElButton icon="Refresh" round @click="clusterTable.request"></ElButton>
+        <ElButton icon="Refresh" round @click="cicdToolTable.request"></ElButton>
         <ElButton icon="Search" round @click="search.show = !search.show"></ElButton>
       </div>
     </div>
 
     <!-- 列表 -->
-    <el-table :data="clusterTable.data" style="width: 100%" @selection-change="handleSelectionChange">
+    <el-table :data="cicdToolTable.data" style="width: 100%" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" />
-      <el-table-column prop="name" label="集群名称" sortable width="200" />
-      <el-table-column prop="api_server" label="APIServer" sortable width="200" />
-      <el-table-column prop="region" label="Region" width="150" />
-      <el-table-column prop="version" label="集群版本" width="150" />
+      <el-table-column prop="name" label="工具名称" sortable width="200" />
+      <el-table-column prop="type" label="工具类型" sortable width="200" />
+      <el-table-column prop="url" label="工具地址" sortable width="200" />
+      <el-table-column prop="credential_type" label="凭证类型" width="150" />
+      <el-table-column prop="credential_name" label="凭证名称" width="150" />
       <el-table-column prop="description" label="描述" show-overflow-tooltip />
       <el-table-column label="操作" fixed="right" width="120">
         <template #default="{ row }">
@@ -51,23 +52,36 @@
         label-width="80px"
         :rules="clusterRules"
       >
-        <ElFormItem label="集群名称" prop="name">
-          <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.name" placeholder="请输入集群名称" />
+        <ElFormItem label="工具名称" prop="name">
+          <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.name" placeholder="请输入工具名称" />
         </ElFormItem>
-        <ElFormItem label="APIServer" prop="api_server" >
-          <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.api_server" placeholder="请输入APIServer" />
-        </ElFormItem>
-        <ElFormItem label="Region" prop="region">
-          <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.region" placeholder="请输入Region" />
-        </ElFormItem>
-        <ElFormItem label="集群版本" prop="version">
-          <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.version" placeholder="请输入集群版本" />
-        </ElFormItem>
-        <ElFormItem label="集群凭证" prop="config">
-          <ElSelect v-if="editForm.state !== 'view'" v-model="editForm.model.config" placeholder="请选择集群凭证" @focus="clusterTable.selectConfig">
-            <ElOption  v-for="item in clusterTable.credentialData" :key="item.name" :label="item.name" :value="item.name" />
+        <ElFormItem label="工具类型" prop="type">
+          <ElSelect v-if="editForm.state !== 'view'" v-model="editForm.model.type" placeholder="请选择工具类型">
+            <ElOption label="Git" value="git" />
+            <ElOption label="Harbor" value="harbor" />
+            <ElOption label="Jenkins" value="jenkins" />
+            <ElOption label="ArgoCD" value="argocd" />
+            <ElOption label="其他" value="other" />
           </ElSelect>
-          <ElInput disabled v-else v-model="editForm.model.config" placeholder="请输入集群凭证" />
+          <ElInput disabled v-else v-model="editForm.model.type" />
+        </ElFormItem>
+        <ElFormItem label="工具地址" prop="url">
+          <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.url" placeholder="请输入工具地址" />
+        </ElFormItem>
+        <ElFormItem label="凭证类型" prop="credential_type">
+          <ElSelect v-if="editForm.state !== 'view'" v-model="editForm.model.credential_type" placeholder="请选择工具凭证类型">
+            <ElOption label="无" value="none" />
+            <ElOption label="Token" value="token" />
+            <ElOption label="KubeConfig" value="kube_config" />
+            <ElOption label="用户名密码" value="basic" />
+          </ElSelect>
+          <ElInput disabled v-else v-model="editForm.model.credential_type"/>
+        </ElFormItem>
+        <ElFormItem label="凭证名称" prop="credential_name">
+          <ElSelect v-if="editForm.state !== 'view'" v-model="editForm.model.credential_name" placeholder="请选择工具凭证" @focus="cicdToolTable.selectConfig">
+            <ElOption  v-for="item in cicdToolTable.credentialData" :key="item.name" :label="item.name" :value="item.name" />
+          </ElSelect>
+          <ElInput disabled v-else v-model="editForm.model.credential_name" />
         </ElFormItem>
         <ElFormItem label="描述" prop="description">
           <ElInput
@@ -98,21 +112,16 @@ const search = reactive({
   show: false,
   model: {
     name: '',
-    api_server: '',
-    region: '',
-    version: '',
-    description: '',
-    config: ''
   } 
 })
 
 const clusterRules = computed(() => {
   const baseRules = {
     name: [{ required: true, message: '请输入集群名称', trigger: 'blur' }],
-    api_server: [{ required: true, message: '请输入APIServer', trigger: 'blur' }],
-    region: [],
-    version: [],
-    config: [{ required: true, message: '请选择集群凭证', trigger: 'blur' }],
+    type: [{ required: true, message: '请选择工具类型', trigger: 'blur' }],
+    url: [{ required: true, message: '请输入工具地址', trigger: 'blur' }],
+    credential_type: [{ required: true, message: '请选择凭证类型', trigger: 'blur' }],
+    credential_name: [{ required: true, message: '请选择凭证名称', trigger: 'blur' }],
     description: [],
   }
   return baseRules
@@ -123,14 +132,14 @@ const editForm = reactive({
   ref: null as FormInstance | null,
   show: false,
   title: '',
-  state: 'edit',
+  state: '',
   model: {
     name: '',
-    api_server: '',
-    region: '',
-    version: '',
+    type: '',
+    url: '',
+    credential_type: '',
+    credential_name: '',
     description: '',
-    config: ''
   } ,
   toAdd: () => {
     editForm.ref?.resetFields()
@@ -139,11 +148,11 @@ const editForm = reactive({
     editForm.state = 'add'
     editForm.model = {
       name: '',
-      api_server: '',
-      region: '',
-      version: '',
-      description: '',
-      config: ''
+      type: '',
+      url: '',
+      credential_type: '',
+      credential_name: '',
+      description: ''
     }
   },
   toEdit: (row: any) => {
@@ -161,57 +170,56 @@ const editForm = reactive({
   submit: () => {
     editForm.ref?.validate().then(() => {
       editForm.show = false
-      clusterTable.create(editForm.model)
+      cicdToolTable.create(editForm.model)
     })
   },
   editSubmit: () => {
     editForm.ref?.validate().then(() => {
       editForm.show = false
-      clusterTable.edit(editForm.model)
+      cicdToolTable.edit(editForm.model)
     })
   }
 })
 // 表格配置
-const clusterTable = reactive({
+const cicdToolTable = reactive({
   loading: false,
   border: true,
   data: [],
   credentialData:[],
   request: () => {
-    clusterTable.loading = true
-    http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/cluster`).then((res: any) => {
-      clusterTable.data = res.data
-      clusterTable.loading = false
+    cicdToolTable.loading = true
+    http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/cicd_tool`).then((res: any) => {
+      cicdToolTable.data = res.data
+      cicdToolTable.loading = false
     })
   },
   create: (form: any) => {
-    clusterTable.loading = true
-    http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/create/cluster`, form).then((res: any) => {
-      clusterTable.loading = false
-      clusterTable.request()
+    cicdToolTable.loading = true
+    http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/create/cicd_tool`, form).then((res: any) => {
+      cicdToolTable.loading = false
       ElMessage.success('新增成功')
+      cicdToolTable.request()
     })
   },
   edit: (form: any) => {
-    clusterTable.loading = true
-    http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/update/cluster`, form).then((res: any) => {
-      clusterTable.loading = false
-      clusterTable.request()
+    cicdToolTable.loading = true
+    http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/update/cicd_tool`, form).then((res: any) => {
+      cicdToolTable.loading = false
       ElMessage.success('编辑成功')
     })
   },
   delete: (form: any) => {
-    clusterTable.loading = true
-    http.delete(import.meta.env.VITE_APP_BASE_URL + `/cicd/delete/cluster/${form.id}`).then((res: any) => {
-      clusterTable.loading = false
-      clusterTable.request()
+    cicdToolTable.loading = true
+    http.delete(import.meta.env.VITE_APP_BASE_URL + `/cicd/delete/cicd_tool/${form.id}`).then((res: any) => {
+      cicdToolTable.loading = false
+      cicdToolTable.request()
       ElMessage.success('删除成功')
     })
   },
   selectConfig: () => {
     http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/credential`).then((res: any) => {
-      clusterTable.credentialData = res.data.filter((item: any) => item.type === 'kube_config')
-      clusterTable.loading = false
+      cicdToolTable.credentialData = res.data.filter((item: any) => item.type === editForm.model.credential_type)
+      cicdToolTable.loading = false
     })
   }
 })
@@ -228,10 +236,10 @@ const deleteSelected = () => {
   }
 
   selectedRows.value.forEach(row => {
-    clusterTable.delete(row)
+    cicdToolTable.delete(row)
   })
 }
 
 // 初始化加载数据
-clusterTable.request()
+cicdToolTable.request()
 </script>

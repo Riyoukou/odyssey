@@ -36,6 +36,8 @@ func HandleCICDFetch(c *gin.Context) {
 		result, err = repository.FetchDeployRecordsByProjectName(c.Query("project"))
 	case "credential":
 		result, err = repository.FetchCredentials()
+	case "cicd_tool":
+		result, err = repository.FetchCICDTools()
 	}
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err)
@@ -148,6 +150,12 @@ func HandleCICDCreate(c *gin.Context) {
 			break
 		}
 		err = repository.CreateCredential(req)
+	case "cicd_tool":
+		var req model.CICDToolTable
+		if err = c.ShouldBind(&req); err != nil {
+			break
+		}
+		err = repository.CreateCICDTool(req)
 	}
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err)
@@ -189,6 +197,12 @@ func HandleCICDUpdate(c *gin.Context) {
 			break
 		}
 		err = repository.UpdateCodeSourceByName(req)
+	case "cicd_tool":
+		var req model.CICDToolTable
+		if err = c.ShouldBind(&req); err != nil {
+			break
+		}
+		err = repository.UpdateCICDTool(req)
 	}
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err)
@@ -218,6 +232,8 @@ func HandleCICDDelete(c *gin.Context) {
 		err = repository.DeleteCodeLibrary(intID)
 	case "credential":
 		err = repository.DeleteCredential(intID)
+	case "cicd_tool":
+		err = repository.DeleteCICDTool(intID)
 	}
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err)

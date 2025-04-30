@@ -191,3 +191,19 @@ type CredentialTable struct {
 func (CredentialTable) TableName() string {
 	return "credentials"
 }
+
+type CICDToolTable struct {
+	ID             int64     `json:"id"`
+	Name           string    `json:"name"`
+	Type           string    `json:"type"`
+	URL            string    `json:"url"`
+	CredentialType string    `json:"credential_type"`
+	CredentialName string    `json:"credential_name"`
+	Description    string    `json:"description"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+}
+
+func (CICDToolTable) TableName() string {
+	return "cicd_tools"
+}

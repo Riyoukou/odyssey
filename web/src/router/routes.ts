@@ -42,6 +42,15 @@ export const dynamicRoutes = [
     component: () => import('@/views/credentialTable/credentialTable.vue')
   },
   {
+    path: '/cicdToolTable',
+    name: 'cicdToolTable',
+    meta: {
+      title: 'CICD工具列表',
+      icon: 'Menu'
+    },
+    component: () => import('@/views/cicdToolTable/cicdToolTable.vue')
+  },
+  {
     path: '/cacheView',
     name: 'cacheView',
     meta: {
