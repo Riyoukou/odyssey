@@ -28,6 +28,7 @@ type ProjectTable struct {
 	Name      string         `json:"name"`
 	Env       datatypes.JSON `json:"env"`
 	Clusters  datatypes.JSON `json:"clusters"`
+	Services  datatypes.JSON `json:"services"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 }
