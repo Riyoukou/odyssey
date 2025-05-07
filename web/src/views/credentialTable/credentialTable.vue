@@ -123,7 +123,7 @@ const editForm = reactive({
   ref: null as FormInstance | null,
   show: false,
   title: '',
-  state: 'edit',
+  state: '',
   model: {
     name: '',
     type: '',

@@ -117,6 +117,16 @@ func UpdateProject(project model.ProjectTable) error {
 }
 
 // cicd_env
+func FetchEnvs() ([]model.EnvTable, error) {
+	var envs []model.EnvTable
+	if err := DB.Find(&envs).Error; err != nil {
+		logger.Errorf("Failed to fetch envs: %v", err)
+		return nil, err
+	}
+
+	return envs, nil
+}
+
 func FetchEnvsByProject(projectName string) ([]model.EnvTable, error) {
 	var envs []model.EnvTable
 	if err := DB.Find(&envs, "project_name = ?", projectName).Error; err != nil {

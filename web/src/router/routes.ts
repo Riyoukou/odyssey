@@ -34,6 +34,26 @@ export const dynamicRoutes = [
     component: () => import('@/views/clusterTable/clusterTable.vue')
   },
   {
+    path: '/projectTable',
+    name: 'projectTable',
+    meta: {
+      title: '项目列表',
+      icon: 'Menu',
+      roles: ['admin','user']
+    },
+    component: () => import('@/views/projectTable/projectTable.vue')
+  },
+  {
+    path: '/envTable',
+    name: 'envTable',
+    meta: {
+      title: '环境列表',
+      icon: 'Menu',
+      roles: ['admin','user']
+    },
+    component: () => import('@/views/envTable/envTable.vue')
+  },
+  {
     path: '/credentialTable',
     name: 'credentialTable',
     meta: {

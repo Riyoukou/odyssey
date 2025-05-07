@@ -1,7 +1,6 @@
 package cicd
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -95,9 +94,9 @@ func HandleCICDCreate(c *gin.Context) {
 		err = repository.CreateProject(req)
 	case "env":
 		var (
-			req     model.EnvTable
-			project model.ProjectTable
-			envs    []string
+			req model.EnvTable
+			//project model.ProjectTable
+			//envs    []string
 		)
 		if err = c.ShouldBind(&req); err != nil {
 			break
@@ -105,7 +104,7 @@ func HandleCICDCreate(c *gin.Context) {
 		if err = repository.CreateEnv(req); err != nil {
 			break
 		}
-		project, err = repository.GetProjectByName(req.ProjectName)
+		/*project, err = repository.GetProjectByName(req.ProjectName)
 		if err != nil {
 			break
 		}
@@ -125,7 +124,7 @@ func HandleCICDCreate(c *gin.Context) {
 		err = repository.UpdateProject(project)
 		if err != nil {
 			break
-		}
+		}*/
 	case "service":
 		var req model.ServiceTable
 		if err = c.ShouldBind(&req); err != nil {
@@ -179,6 +178,12 @@ func HandleCICDUpdate(c *gin.Context) {
 			break
 		}
 		err = repository.UpdateProject(req)
+	case "env":
+		var req model.EnvTable
+		if err = c.ShouldBind(&req); err != nil {
+			break
+		}
+		err = repository.UpdateEnvByNameAndProject(req)
 	case "service":
 		var req model.ServiceTable
 		if err = c.ShouldBind(&req); err != nil {
