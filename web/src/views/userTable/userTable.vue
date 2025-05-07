@@ -1,13 +1,13 @@
 <template>
   <div class="flex flex-col overflow-auto">
     <!-- 搜索表单 -->
-    <ElForm v-if="search.show" :model="search.model" ref="search.ref" label-width="80px">
+    <ElForm v-if="search.show" :model="search.model" ref="searchRef" label-width="80px">
       <ElFormItem label="名称" prop="name">
         <ElInput v-model="search.model.name" placeholder="请输入名称" />
       </ElFormItem>
       <div class="flex justify-center mb-3">
-        <ElButton icon="RefreshRight" @click="() => search.ref?.resetFields()">重置</ElButton>
-        <ElButton type="primary" icon="Search" @click="userTable.request">查询</ElButton>
+        <ElButton icon="RefreshRight" @click="search.reset">重置</ElButton>
+        <ElButton type="primary" icon="Search" @click="search.search">查询</ElButton>
       </div>
     </ElForm>
 
@@ -22,13 +22,13 @@
         </el-popconfirm>
       </div>
       <div>
-        <ElButton icon="Refresh" round @click="userTable.request"></ElButton>
+        <ElButton icon="Refresh" round @click="table.request"></ElButton>
         <ElButton icon="Search" round @click="search.show = !search.show"></ElButton>
       </div>
     </div>
 
     <!-- 列表 -->
-    <el-table :data="userTable.data" style="width: 100%" @selection-change="handleSelectionChange">
+    <el-table :data="table.filteredData" style="width: 100%" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" />
       <el-table-column prop="name" label="用户名" sortable width="200" />
       <el-table-column prop="email" label="邮箱" sortable width="200" />
@@ -52,7 +52,7 @@
         :ref="(v: FormInstance | null) => (editForm.ref = v)" 
         :model="editForm.model" 
         label-width="80px"
-        :rules="clusterRules"
+        :rules="rules"
       >
         <template v-if="editForm.state === 'editPassword'">
           <ElFormItem label="当前密码" prop="old_password">
@@ -89,18 +89,24 @@ import { ElMessage, type FormInstance } from 'element-plus'
 import http from '@/api'
 
 // 搜索表单配置
+const searchRef = ref<FormInstance | null>(null);
 const search = reactive({
-  ref: null as FormInstance | null,
   show: false,
   model: {
     name: '',
-    password: '',
-    email: '',
-    phone: '',
-  } 
+  },
+  search: () => {
+    table.filteredData = table.data.filter(
+      (data) =>
+        data.name?.toLowerCase().includes(search.model.name.toLowerCase())
+    );
+  },
+  reset: () => {
+    searchRef.value?.resetFields();
+  },
 })
 
-const clusterRules = computed(() => {
+const rules = computed(() => {
   if (editForm.state === 'editPassword') {
     return {
       old_password: [{ required: true, message: '请输入当前密码', trigger: 'blur' }],
@@ -166,64 +172,66 @@ const editForm = reactive({
     editForm.ref?.validate().then(() => {
       const { new_password, old_password, ...user } = editForm.model
       editForm.show = false
-      userTable.create(user)
+      table.create(user)
     })
   },
   editSubmit: () => {
     editForm.ref?.validate().then(() => {
       editForm.show = false
-      userTable.edit(editForm.model)
+      table.edit(editForm.model)
     })
   },
   editPasswordSubmit: () => {
     editForm.ref?.validate().then(() => {
       editForm.show = false
-      userTable.editPassword(editForm.model)
+      table.editPassword(editForm.model)
     })
   }
 })
 // 表格配置
-const userTable = reactive({
+const table = reactive({
   loading: false,
   border: true,
   data: [],
+  filteredData: [],
   credentialData:[],
   request: () => {
-    userTable.loading = true
+    table.loading = true
     http.get(import.meta.env.VITE_APP_BASE_URL + `/user/fetch/user`).then((res: any) => {
-      userTable.data = res.data
-      userTable.loading = false
+      table.data = res.data
+      table.filteredData = res.data
+      table.loading = false
     })
   },
   create: (form: any) => {
-    userTable.loading = true
+    table.loading = true
     http.post(import.meta.env.VITE_APP_BASE_URL + `/user/register`, form).then((res: any) => {
-      userTable.loading = false
-      userTable.request()
+      table.loading = false
+      table.request()
       ElMessage.success('新增成功')
     })
   },
   edit: (form: any) => {
-    userTable.loading = true
+    table.loading = true
     http.post(import.meta.env.VITE_APP_BASE_URL + `/user/update/user`, form).then((res: any) => {
-      userTable.loading = false
-      userTable.request()
+      table.loading = false
+      table.request()
       ElMessage.success('编辑成功')
     })
   },
   editPassword: (form: any) => {
-    userTable.loading = true
+    table.loading = true
     http.post(import.meta.env.VITE_APP_BASE_URL + `/user/update/user_password`, form).then((res: any) => {
-      userTable.loading = false
-      userTable.request()
+      table.loading = false
+      table.request()
       ElMessage.success('编辑成功')
     })
   },
   delete: (form: any) => {
-    userTable.loading = true
+    table.loading = true
     http.delete(import.meta.env.VITE_APP_BASE_URL + `/user/delete/user/${form.id}`).then((res: any) => {
-      userTable.loading = false
-      userTable.request()
+      table.loading = false
+      table.request()
       ElMessage.success('删除成功')
     })
   },
@@ -241,10 +249,10 @@ const deleteSelected = () => {
   }
 
   selectedRows.value.forEach(row => {
-    userTable.delete(row)
+    table.delete(row)
   })
 }
 
 // 初始化加载数据
-userTable.request()
+table.request()
 </script>

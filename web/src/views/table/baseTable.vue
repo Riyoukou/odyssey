@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col overflow-auto">
     <!-- 搜索表单 -->
-    <ElForm v-if="search.show" :model="search.model" ref="search.ref" label-width="80px">
+    <ElForm v-if="search.show" :model="search.model" ref="searchRef" label-width="80px">
       <ElFormItem label="姓名" prop="name">
         <ElInput v-model="search.model.name" placeholder="请输入姓名" />
       </ElFormItem>
@@ -18,8 +18,8 @@
         <ElDatePicker v-model="search.model.date" type="datetime" placeholder="选择出生日期" />
       </ElFormItem>
       <div class="flex justify-center mb-3">
-        <ElButton icon="RefreshRight" @click="() => search.ref?.resetFields()">重置</ElButton>
-        <ElButton type="primary" icon="Search" @click="baseTable.request">查询</ElButton>
+        <ElButton icon="RefreshRight" @click="search.reset">重置</ElButton>
+        <ElButton type="primary" icon="Search" @click="search.search">查询</ElButton>
       </div>
     </ElForm>
 
@@ -30,13 +30,13 @@
         <ElButton icon="Delete">删除</ElButton>
       </div>
       <div>
-        <ElButton icon="Refresh" round @click="baseTable.request"></ElButton>
+        <ElButton icon="Refresh" round @click="table.request"></ElButton>
         <ElButton icon="Search" round @click="search.show = !search.show"></ElButton>
       </div>
     </div>
 
     <!-- 列表 -->
-    <el-table :data="baseTable.data" style="width: 100%">
+    <el-table :data="table.data" style="width: 100%">
       <el-table-column type="selection" width="55" />
       <el-table-column prop="name" label="姓名" sortable />
       <el-table-column prop="age" label="年龄" sortable />
@@ -92,10 +92,21 @@ import type { FormInstance } from 'element-plus'
 import http from '@/api'
 
 // 搜索表单配置
+const searchRef = ref<FormInstance | null>(null);
 const search = reactive({
-  ref: null as FormInstance | null,
   show: false,
-  model: { name: '', age: '', email: '', date: '' },
+  model: {
+    name: '',
+  },
+  search: () => {
+    table.filteredData = table.data.filter(
+      (data) =>
+        data.name?.toLowerCase().includes(search.model.name.toLowerCase())
+    );
+  },
+  reset: () => {
+    searchRef.value?.resetFields();
+  },
 })
 
 // 表单配置
@@ -126,16 +137,17 @@ const editForm = reactive({
   submit: () => {
     editForm.ref?.validate().then(() => {
       editForm.show = false
-      baseTable.request()
+      table.request()
     })
   }
 })
 
 // 表格配置
-const baseTable = reactive({
+const table = reactive({
   loading: false,
   border: true,
   data: [],
+  filteredData: [],
   page: {
     sortOrder: null,
     sortProp: '',
@@ -144,14 +156,14 @@ const baseTable = reactive({
     total: 0
   },
   request: () => {
-    baseTable.loading = true
+    table.loading = true
     http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/cluster`).then((res) => {
-      baseTable.data = res.data
-      baseTable.loading = false
+      table.data = res.data
+      table.loading = false
     })
   },
 })
 
 // 初始化加载数据
-baseTable.request()
+table.request()
 </script>

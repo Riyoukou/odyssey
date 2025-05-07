@@ -1,13 +1,13 @@
 <template>
   <div class="flex flex-col overflow-auto">
     <!-- 搜索表单 -->
-    <ElForm v-if="search.show" :model="search.model" ref="search.ref" label-width="80px">
+    <ElForm v-if="search.show" :model="search.model" ref="searchRef" label-width="80px">
       <ElFormItem label="名称" prop="name">
         <ElInput v-model="search.model.name" placeholder="请输入名称" />
       </ElFormItem>
       <div class="flex justify-center mb-3">
-        <ElButton icon="RefreshRight" @click="() => search.ref?.resetFields()">重置</ElButton>
-        <ElButton type="primary" icon="Search" @click="credentialTable.request">查询</ElButton>
+        <ElButton icon="RefreshRight" @click="search.reset">重置</ElButton>
+        <ElButton type="primary" icon="Search" @click="search.search">查询</ElButton>
       </div>
     </ElForm>
     <!-- 按钮条 -->
@@ -21,12 +21,12 @@
         </el-popconfirm>
       </div>
       <div>
-        <ElButton icon="Refresh" round @click="credentialTable.request"></ElButton>
+        <ElButton icon="Refresh" round @click="table.request"></ElButton>
         <ElButton icon="Search" round @click="search.show = !search.show"></ElButton>
       </div>
     </div>
     <!-- 列表 -->
-    <el-table :data="credentialTable.data" style="width: 100%" @selection-change="handleSelectionChange">
+    <el-table :data="table.filteredData" style="width: 100%" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" />
       <el-table-column prop="name" label="凭证名称" sortable width="200" />
       <el-table-column prop="type" label="凭证类型" sortable width="200" />
@@ -38,7 +38,7 @@
       </el-table-column>
     </el-table>
     <ElDialog v-model="editForm.show" :title="editForm.title" width="800px" top="10vh">
-      <ElForm :ref="(v: FormInstance | null) => (editForm.ref = v)" :model="editForm.model" label-width="80px" :rules="credentialRules">
+      <ElForm :ref="(v: FormInstance | null) => (editForm.ref = v)" :model="editForm.model" label-width="80px" :rules="rules">
         <ElFormItem label="凭证名称" prop="name">
           <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.name" placeholder="请输入凭证名称" />
         </ElFormItem>
@@ -85,18 +85,24 @@ import { ElMessage, type FormInstance } from 'element-plus'
 import http from '@/api'
 
 // 搜索表单配置
+const searchRef = ref<FormInstance | null>(null);
 const search = reactive({
-  ref: null as FormInstance | null,
   show: false,
   model: {
     name: '',
-    type: '',
-    description: '',
-    data: ''
-  } ,
+  },
+  search: () => {
+    table.filteredData = table.data.filter(
+      (data) =>
+        data.name?.toLowerCase().includes(search.model.name.toLowerCase())
+    );
+  },
+  reset: () => {
+    searchRef.value?.resetFields();
+  },
 })
 
-const credentialRules = computed(() => {
+const rules = computed(() => {
   if (editForm.model.type === 'basic') {
     return {
       name: [{ required: true, message: '请输入凭证名称', trigger: 'blur' }],
@@ -166,36 +172,38 @@ const editForm = reactive({
         credential.data = JSON.stringify({ username, password })
       }  
       editForm.show = false
-      credentialTable.create(credential)
+      table.create(credential)
     })
   }
 })
 
 // 表格配置
-const credentialTable = reactive({
+const table = reactive({
   loading: false,
   border: true,
   data: [],
+  filteredData: [],
   request: () => {
-    credentialTable.loading = true
+    table.loading = true
     http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/credential`).then((res: any) => {
-      credentialTable.data = res.data
-      credentialTable.loading = false
+      table.data = res.data
+      table.filteredData = res.data
+      table.loading = false
     })
   },
   create: (form: any) => {
-    credentialTable.loading = true
+    table.loading = true
     http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/create/credential`, form).then((res: any) => {
-      credentialTable.loading = false
-      credentialTable.request()
+      table.loading = false
+      table.request()
       ElMessage.success('创建成功')
     })
   },
   delete: (form: any) => {
-    credentialTable.loading = true
+    table.loading = true
     http.delete(import.meta.env.VITE_APP_BASE_URL + `/cicd/delete/credential/${form.id}`).then((res: any) => {
-      credentialTable.loading = false
-      credentialTable.request()
+      table.loading = false
+      table.request()
       ElMessage.success('删除成功')
     })
   }
@@ -213,10 +221,10 @@ const deleteSelected = () => {
   }
 
   selectedRows.value.forEach(row => {
-    credentialTable.delete(row)
+    table.delete(row)
   })
 }
 
 // 初始化加载数据
-credentialTable.request()
+table.request()
 </script>

@@ -1,13 +1,13 @@
 <template>
   <div class="flex flex-col overflow-auto">
     <!-- 搜索表单 -->
-    <ElForm v-if="search.show" :model="search.model" ref="search.ref" label-width="80px">
+    <ElForm v-if="search.show" :model="search.model" ref="searchRef" label-width="80px">
       <ElFormItem label="名称" prop="name">
         <ElInput v-model="search.model.name" placeholder="请输入名称" />
       </ElFormItem>
       <div class="flex justify-center mb-3">
-        <ElButton icon="RefreshRight" @click="() => search.ref?.resetFields()">重置</ElButton>
-        <ElButton type="primary" icon="Search" @click="envTable.request">查询</ElButton>
+        <ElButton icon="RefreshRight" @click="search.reset">重置</ElButton>
+        <ElButton type="primary" icon="Search" @click="search.search">查询</ElButton>
       </div>
     </ElForm>
 
@@ -21,17 +21,17 @@
           </template>
         </el-popconfirm>
       </div>
-      <div>
-        <ElSelect @change="envTable.selectProject" :placeholder=envTable.activeProject >
-          <ElOption v-for="item in envTable.projectData" :key="item.name" :label="item.name" :value="item.name" />
+      <div >
+        <ElSelect class="w-50" @change="table.selectProject" :placeholder=table.activeProject >
+          <ElOption v-for="item in table.projectData" :key="item.name" :label="item.name" :value="item.name" />
         </ElSelect>
-        <ElButton icon="Refresh" round @click="envTable.request"></ElButton>
+        <ElButton icon="Refresh" round @click="table.request" class="ml-4"></ElButton>
         <ElButton icon="Search" round @click="search.show = !search.show"></ElButton>
       </div>
     </div>
 
     <!-- 列表 -->
-    <el-table :data="envTable.data" style="width: 100%" @selection-change="handleSelectionChange">
+    <el-table :data="table.filteredData" style="width: 100%" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" />
       <el-table-column prop="name" label="环境名称" sortable/>
       <el-table-column prop="type" label="环境类型" sortable/>
@@ -51,7 +51,7 @@
         :ref="(v: FormInstance | null) => (editForm.ref = v)" 
         :model="editForm.model" 
         label-width="80px"
-        :rules="envRules"
+        :rules="rules"
       >
         <ElFormItem label="环境名称" prop="name">
           <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.name" placeholder="请输入项目名称" />
@@ -64,8 +64,8 @@
           </ElSelect>
         </ElFormItem>
         <ElFormItem label="项目名称" prop="project_name">
-          <ElSelect disabled v-model="editForm.model.project_name" placeholder="请选择项目名称" @change="envTable.selectProject()">
-            <ElOption v-for="item in envTable.projectData" :key="item.name" :label="item.name" :value="item.name" />
+          <ElSelect disabled v-model="editForm.model.project_name" placeholder="请选择项目名称" @change="table.selectProject()">
+            <ElOption v-for="item in table.projectData" :key="item.name" :label="item.name" :value="item.name" />
           </ElSelect>
         </ElFormItem>
         <ElFormItem label="名称空间" prop="namespace">
@@ -85,21 +85,25 @@ import { ref, reactive, computed } from 'vue'
 import { ElMessage, type FormInstance } from 'element-plus'
 import http from '@/api'
 
-const activeProject = ref('')
-
 // 搜索表单配置
+const searchRef = ref<FormInstance | null>(null);
 const search = reactive({
-  ref: null as FormInstance | null,
   show: false,
   model: {
     name: '',
-    type: '',
-    project_name: '',
-    namespace: '',
-  } 
+  },
+  search: () => {
+    table.filteredData = table.data.filter(
+      (data) =>
+        data.name?.toLowerCase().includes(search.model.name.toLowerCase())
+    );
+  },
+  reset: () => {
+    searchRef.value?.resetFields();
+  },
 })
 
-const envRules = computed(() => {
+const rules = computed(() => {
   const baseRules = {
     name: [{ required: true, message: '请输入环境名称', trigger: 'blur' }],
     type: [{ required: true, message: '请选择环境类型', trigger: 'change' }],
@@ -132,7 +136,7 @@ const editForm = reactive({
       project_name: '',
       namespace: '',
     }
-    envTable.fetchProject()
+    table.fetchProject()
   },
   toView: (row: any) => {
     editForm.show = true
@@ -145,69 +149,71 @@ const editForm = reactive({
     editForm.title = '编辑环境'
     editForm.state = 'edit'
     editForm.model = { ...row }
-    envTable.fetchProject()
+    table.fetchProject()
   },
   submit: () => {
     editForm.ref?.validate().then(() => {
       editForm.show = false
-      envTable.create(editForm.model)
+      table.create(editForm.model)
     })
   },
   editSubmit: () => {
     editForm.ref?.validate().then(() => {
       editForm.show = false
-      envTable.edit(editForm.model)
+      table.edit(editForm.model)
     })
   }
 })
 // 表格配置
-const envTable = reactive({
+const table = reactive({
   loading: false,
   border: true,
   activeProject: '请选择项目名称',
   data: [],
+  filteredData: [],
   projectData: [],
   request: () => {
-    envTable.loading = true
-    http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/env?project=${envTable.activeProject}`).then((res: any) => {
-      envTable.data = res.data
-      envTable.loading = false
+    table.loading = true
+    http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/env?project=${table.activeProject}`).then((res: any) => {
+      table.data = res.data
+      table.filteredData = res.data
+      table.loading = false
     })
   },
   fetchProject: () => {
-    envTable.loading = true
+    table.loading = true
     http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/project`).then((res: any) => {
-      envTable.projectData = res.data
-      envTable.loading = false
+      table.projectData = res.data
+      table.loading = false
     })
   },
   create: (form: any) => {
-    envTable.loading = true
+    table.loading = true
     http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/create/env`, form).then((res: any) => {
-      envTable.loading = false
-      envTable.request()
+      table.loading = false
+      table.request()
       ElMessage.success('新增成功')
     })
   },
   edit: (form: any) => {
-    envTable.loading = true
+    table.loading = true
     http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/update/env`, form).then((res: any) => {
-      envTable.loading = false
-      envTable.request()
+      table.loading = false
+      table.request()
       ElMessage.success('编辑成功')
     })
   },
   delete: (form: any) => {
-    envTable.loading = true
+    table.loading = true
     http.delete(import.meta.env.VITE_APP_BASE_URL + `/cicd/delete/env/${form.id}`).then((res: any) => {
-      envTable.loading = false
-      envTable.request()
+      table.loading = false
+      table.request()
       ElMessage.success('删除成功')
     })
   },
   selectProject: (project_name: string) => {
-    envTable.activeProject = project_name
-    envTable.request()
+    table.activeProject = project_name
+    table.request()
   }
 })
 
@@ -223,11 +229,11 @@ const deleteSelected = () => {
   }
 
   selectedRows.value.forEach(row => {
-    envTable.delete(row)
+    table.delete(row)
   })
 }
 
 // 初始化加载数据
-envTable.request()
-envTable.fetchProject()
+table.request()
+table.fetchProject()
 </script>

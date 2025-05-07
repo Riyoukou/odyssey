@@ -1,13 +1,13 @@
 <template>
   <div class="flex flex-col overflow-auto">
     <!-- 搜索表单 -->
-    <ElForm v-if="search.show" :model="search.model" ref="search.ref" label-width="80px">
+    <ElForm v-if="search.show" :model="search.model" ref="searchRef" label-width="80px">
       <ElFormItem label="名称" prop="name">
         <ElInput v-model="search.model.name" placeholder="请输入名称" />
       </ElFormItem>
       <div class="flex justify-center mb-3">
-        <ElButton icon="RefreshRight" @click="() => search.ref?.resetFields()">重置</ElButton>
-        <ElButton type="primary" icon="Search" @click="projectTable.request">查询</ElButton>
+        <ElButton icon="RefreshRight" @click="search.reset">重置</ElButton>
+        <ElButton type="primary" icon="Search" @click="search.search">查询</ElButton>
       </div>
     </ElForm>
 
@@ -22,13 +22,13 @@
         </el-popconfirm>
       </div>
       <div>
-        <ElButton icon="Refresh" round @click="projectTable.request"></ElButton>
+        <ElButton icon="Refresh" round @click="table.request"></ElButton>
         <ElButton icon="Search" round @click="search.show = !search.show"></ElButton>
       </div>
     </div>
 
     <!-- 列表 -->
-    <el-table :data="projectTable.data" style="width: 100%" @selection-change="handleSelectionChange">
+    <el-table :data="table.filteredData" style="width: 100%" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" />
       <el-table-column prop="name" label="项目名称" sortable/>
       <el-table-column label="操作" fixed="right" width="120">
@@ -45,7 +45,7 @@
         :ref="(v: FormInstance | null) => (editForm.ref = v)" 
         :model="editForm.model" 
         label-width="80px"
-        :rules="projectRules"
+        :rules="rules"
       >
         <ElFormItem label="项目名称" prop="name">
           <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.name" placeholder="请输入项目名称" />
@@ -65,15 +65,24 @@ import { ElMessage, type FormInstance } from 'element-plus'
 import http from '@/api'
 
 // 搜索表单配置
+const searchRef = ref<FormInstance | null>(null);
 const search = reactive({
-  ref: null as FormInstance | null,
   show: false,
   model: {
     name: '',
-  } 
+  },
+  search: () => {
+    table.filteredData = table.data.filter(
+      (data) =>
+        data.name?.toLowerCase().includes(search.model.name.toLowerCase())
+    );
+  },
+  reset: () => {
+    searchRef.value?.resetFields();
+  },
 })
 
-const projectRules = computed(() => {
+const rules = computed(() => {
   const baseRules = {
     name: [{ required: true, message: '请输入项目名称', trigger: 'blur' }],
   }
@@ -113,35 +122,37 @@ const editForm = reactive({
   submit: () => {
     editForm.ref?.validate().then(() => {
       editForm.show = false
-      projectTable.create(editForm.model)
+      table.create(editForm.model)
     })
   }
 })
 // 表格配置
-const projectTable = reactive({
+const table = reactive({
   loading: false,
   border: true,
   data: [],
+  filteredData: [],
   request: () => {
-    projectTable.loading = true
+    table.loading = true
     http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/project`).then((res: any) => {
-      projectTable.data = res.data
-      projectTable.loading = false
+      table.data = res.data
+      table.filteredData = res.data
+      table.loading = false
     })
   },
   create: (form: any) => {
-    projectTable.loading = true
+    table.loading = true
     http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/create/project`, form).then((res: any) => {
-      projectTable.loading = false
-      projectTable.request()
+      table.loading = false
+      table.request()
       ElMessage.success('新增成功')
     })
   },
   delete: (form: any) => {
-    projectTable.loading = true
+    table.loading = true
     http.delete(import.meta.env.VITE_APP_BASE_URL + `/cicd/delete/project/${form.id}`).then((res: any) => {
-      projectTable.loading = false
-      projectTable.request()
+      table.loading = false
+      table.request()
       ElMessage.success('删除成功')
     })
   },
@@ -159,10 +170,10 @@ const deleteSelected = () => {
   }
 
   selectedRows.value.forEach(row => {
-    projectTable.delete(row)
+    table.delete(row)
   })
 }
 
 // 初始化加载数据
-projectTable.request()
+table.request()
 </script>

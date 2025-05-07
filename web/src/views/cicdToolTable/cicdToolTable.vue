@@ -1,13 +1,13 @@
 <template>
   <div class="flex flex-col overflow-auto">
     <!-- 搜索表单 -->
-    <ElForm v-if="search.show" :model="search.model" ref="search.ref" label-width="80px">
+    <ElForm v-if="search.show" :model="search.model" ref="searchRef" label-width="80px">
       <ElFormItem label="名称" prop="name">
         <ElInput v-model="search.model.name" placeholder="请输入名称" />
       </ElFormItem>
       <div class="flex justify-center mb-3">
-        <ElButton icon="RefreshRight" @click="() => search.ref?.resetFields()">重置</ElButton>
-        <ElButton type="primary" icon="Search" @click="cicdToolTable.request">查询</ElButton>
+        <ElButton icon="RefreshRight" @click="search.reset">重置</ElButton>
+        <ElButton type="primary" icon="Search" @click="search.search">查询</ElButton>
       </div>
     </ElForm>
 
@@ -22,13 +22,13 @@
         </el-popconfirm>
       </div>
       <div>
-        <ElButton icon="Refresh" round @click="cicdToolTable.request"></ElButton>
+        <ElButton icon="Refresh" round @click="table.request"></ElButton>
         <ElButton icon="Search" round @click="search.show = !search.show"></ElButton>
       </div>
     </div>
 
     <!-- 列表 -->
-    <el-table :data="cicdToolTable.data" style="width: 100%" @selection-change="handleSelectionChange">
+    <el-table :data="table.filteredData" style="width: 100%" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" />
       <el-table-column prop="name" label="工具名称" sortable width="200" />
       <el-table-column prop="type" label="工具类型" sortable width="200" />
@@ -50,7 +50,7 @@
         :ref="(v: FormInstance | null) => (editForm.ref = v)" 
         :model="editForm.model" 
         label-width="80px"
-        :rules="clusterRules"
+        :rules="rules"
       >
         <ElFormItem label="工具名称" prop="name">
           <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.name" placeholder="请输入工具名称" />
@@ -78,8 +78,8 @@
           <ElInput disabled v-else v-model="editForm.model.credential_type"/>
         </ElFormItem>
         <ElFormItem label="凭证名称" prop="credential_name">
-          <ElSelect v-if="editForm.state !== 'view'" v-model="editForm.model.credential_name" placeholder="请选择工具凭证" @focus="cicdToolTable.selectConfig">
-            <ElOption  v-for="item in cicdToolTable.credentialData" :key="item.name" :label="item.type+'/'+item.name" :value="item.name" />
+          <ElSelect v-if="editForm.state !== 'view'" v-model="editForm.model.credential_name" placeholder="请选择工具凭证" @focus="table.selectConfig">
+            <ElOption  v-for="item in table.credentialData" :key="item.name" :label="item.type+'/'+item.name" :value="item.name" />
           </ElSelect>
           <ElInput disabled v-else v-model="editForm.model.credential_name" />
         </ElFormItem>
@@ -107,15 +107,24 @@ import { ElMessage, type FormInstance } from 'element-plus'
 import http from '@/api'
 
 // 搜索表单配置
+const searchRef = ref<FormInstance | null>(null);
 const search = reactive({
-  ref: null as FormInstance | null,
   show: false,
   model: {
     name: '',
-  } 
+  },
+  search: () => {
+    table.filteredData = table.data.filter(
+      (data) =>
+        data.name?.toLowerCase().includes(search.model.name.toLowerCase())
+    );
+  },
+  reset: () => {
+    searchRef.value?.resetFields();
+  },
 })
 
-const clusterRules = computed(() => {
+const rules = computed(() => {
   return {
     name: [{ required: true, message: '请输入集群名称', trigger: 'blur' }],
     type: [{ required: true, message: '请选择工具类型', trigger: 'blur' }],
@@ -169,56 +178,58 @@ const editForm = reactive({
   submit: () => {
     editForm.ref?.validate().then(() => {
       editForm.show = false
-      cicdToolTable.create(editForm.model)
+      table.create(editForm.model)
     })
   },
   editSubmit: () => {
     editForm.ref?.validate().then(() => {
       editForm.show = false
-      cicdToolTable.edit(editForm.model)
+      table.edit(editForm.model)
     })
   }
 })
 // 表格配置
-const cicdToolTable = reactive({
+const table = reactive({
   loading: false,
   border: true,
   data: [],
+  filteredData: [],
   credentialData:[],
   request: () => {
-    cicdToolTable.loading = true
+    table.loading = true
     http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/cicd_tool`).then((res: any) => {
-      cicdToolTable.data = res.data
-      cicdToolTable.loading = false
+      table.data = res.data
+      table.filteredData = res.data
+      table.loading = false
     })
   },
   create: (form: any) => {
-    cicdToolTable.loading = true
+    table.loading = true
     http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/create/cicd_tool`, form).then((res: any) => {
-      cicdToolTable.loading = false
+      table.loading = false
       ElMessage.success('新增成功')
-      cicdToolTable.request()
+      table.request()
     })
   },
   edit: (form: any) => {
-    cicdToolTable.loading = true
+    table.loading = true
     http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/update/cicd_tool`, form).then((res: any) => {
-      cicdToolTable.loading = false
+      table.loading = false
       ElMessage.success('编辑成功')
     })
   },
   delete: (form: any) => {
-    cicdToolTable.loading = true
+    table.loading = true
     http.delete(import.meta.env.VITE_APP_BASE_URL + `/cicd/delete/cicd_tool/${form.id}`).then((res: any) => {
-      cicdToolTable.loading = false
-      cicdToolTable.request()
+      table.loading = false
+      table.request()
       ElMessage.success('删除成功')
     })
   },
   selectConfig: () => {
     http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/credential`).then((res: any) => {
-      cicdToolTable.credentialData = res.data.filter((item: any) => item.type === editForm.model.credential_type)
-      cicdToolTable.loading = false
+      table.credentialData = res.data.filter((item: any) => item.type === editForm.model.credential_type)
+      table.loading = false
     })
   }
 })
@@ -235,10 +246,10 @@ const deleteSelected = () => {
   }
 
   selectedRows.value.forEach(row => {
-    cicdToolTable.delete(row)
+    table.delete(row)
   })
 }
 
 // 初始化加载数据
-cicdToolTable.request()
+table.request()
 </script>

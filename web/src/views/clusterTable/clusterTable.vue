@@ -1,13 +1,13 @@
 <template>
   <div class="flex flex-col overflow-auto">
     <!-- 搜索表单 -->
-    <ElForm v-if="search.show" :model="search.model" ref="search.ref" label-width="80px">
+    <ElForm v-if="search.show" :model="search.model" ref="searchRef" label-width="80px">
       <ElFormItem label="名称" prop="name">
         <ElInput v-model="search.model.name" placeholder="请输入名称" />
       </ElFormItem>
       <div class="flex justify-center mb-3">
-        <ElButton icon="RefreshRight" @click="() => search.ref?.resetFields()">重置</ElButton>
-        <ElButton type="primary" icon="Search" @click="clusterTable.request">查询</ElButton>
+        <ElButton icon="RefreshRight" @click="search.reset">重置</ElButton>
+        <ElButton type="primary" icon="Search" @click="search.search">查询</ElButton>
       </div>
     </ElForm>
 
@@ -22,13 +22,13 @@
         </el-popconfirm>
       </div>
       <div>
-        <ElButton icon="Refresh" round @click="clusterTable.request"></ElButton>
+        <ElButton icon="Refresh" round @click="table.request"></ElButton>
         <ElButton icon="Search" round @click="search.show = !search.show"></ElButton>
       </div>
     </div>
 
     <!-- 列表 -->
-    <el-table :data="clusterTable.data" style="width: 100%" @selection-change="handleSelectionChange">
+    <el-table :data="table.filteredData" style="width: 100%" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" />
       <el-table-column prop="name" label="集群名称" sortable width="200" />
       <el-table-column prop="api_server" label="APIServer" sortable width="200" />
@@ -49,7 +49,7 @@
         :ref="(v: FormInstance | null) => (editForm.ref = v)" 
         :model="editForm.model" 
         label-width="80px"
-        :rules="clusterRules"
+        :rules="rules"
       >
         <ElFormItem label="集群名称" prop="name">
           <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.name" placeholder="请输入集群名称" />
@@ -64,8 +64,8 @@
           <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.version" placeholder="请输入集群版本" />
         </ElFormItem>
         <ElFormItem label="集群凭证" prop="config">
-          <ElSelect v-if="editForm.state !== 'view'" v-model="editForm.model.config" placeholder="请选择集群凭证" @focus="clusterTable.selectConfig">
-            <ElOption  v-for="item in clusterTable.credentialData" :key="item.name" :label="item.name" :value="item.name" />
+          <ElSelect v-if="editForm.state !== 'view'" v-model="editForm.model.config" placeholder="请选择集群凭证" @focus="table.selectConfig">
+            <ElOption  v-for="item in table.credentialData" :key="item.name" :label="item.name" :value="item.name" />
           </ElSelect>
           <ElInput disabled v-else v-model="editForm.model.config" placeholder="请输入集群凭证" />
         </ElFormItem>
@@ -93,20 +93,24 @@ import { ElMessage, type FormInstance } from 'element-plus'
 import http from '@/api'
 
 // 搜索表单配置
+const searchRef = ref<FormInstance | null>(null);
 const search = reactive({
-  ref: null as FormInstance | null,
   show: false,
   model: {
     name: '',
-    api_server: '',
-    region: '',
-    version: '',
-    description: '',
-    config: ''
-  } 
+  },
+  search: () => {
+    table.filteredData = table.data.filter(
+      (data) =>
+        data.name?.toLowerCase().includes(search.model.name.toLowerCase())
+    );
+  },
+  reset: () => {
+    searchRef.value?.resetFields();
+  },
 })
 
-const clusterRules = computed(() => {
+const rules = computed(() => {
   const baseRules = {
     name: [{ required: true, message: '请输入集群名称', trigger: 'blur' }],
     api_server: [{ required: true, message: '请输入APIServer', trigger: 'blur' }],
@@ -161,57 +165,58 @@ const editForm = reactive({
   submit: () => {
     editForm.ref?.validate().then(() => {
       editForm.show = false
-      clusterTable.create(editForm.model)
+      table.create(editForm.model)
     })
   },
   editSubmit: () => {
     editForm.ref?.validate().then(() => {
       editForm.show = false
-      clusterTable.edit(editForm.model)
+      table.edit(editForm.model)
     })
   }
 })
 // 表格配置
-const clusterTable = reactive({
+const table = reactive({
   loading: false,
   border: true,
   data: [],
   credentialData:[],
   request: () => {
-    clusterTable.loading = true
+    table.loading = true
     http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/cluster`).then((res: any) => {
-      clusterTable.data = res.data
-      clusterTable.loading = false
+      table.data = res.data
+      table.filteredData = res.data
+      table.loading = false
     })
   },
   create: (form: any) => {
-    clusterTable.loading = true
+    table.loading = true
     http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/create/cluster`, form).then((res: any) => {
-      clusterTable.loading = false
-      clusterTable.request()
+      table.loading = false
+      table.request()
       ElMessage.success('新增成功')
     })
   },
   edit: (form: any) => {
-    clusterTable.loading = true
+    table.loading = true
     http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/update/cluster`, form).then((res: any) => {
-      clusterTable.loading = false
-      clusterTable.request()
+      table.loading = false
+      table.request()
       ElMessage.success('编辑成功')
     })
   },
   delete: (form: any) => {
-    clusterTable.loading = true
+    table.loading = true
     http.delete(import.meta.env.VITE_APP_BASE_URL + `/cicd/delete/cluster/${form.id}`).then((res: any) => {
-      clusterTable.loading = false
-      clusterTable.request()
+      table.loading = false
+      table.request()
       ElMessage.success('删除成功')
     })
   },
   selectConfig: () => {
     http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/credential`).then((res: any) => {
-      clusterTable.credentialData = res.data.filter((item: any) => item.type === 'kube_config')
-      clusterTable.loading = false
+      table.credentialData = res.data.filter((item: any) => item.type === 'kube_config')
+      table.loading = false
     })
   }
 })
@@ -228,10 +233,10 @@ const deleteSelected = () => {
   }
 
   selectedRows.value.forEach(row => {
-    clusterTable.delete(row)
+    table.delete(row)
   })
 }
 
 // 初始化加载数据
-clusterTable.request()
+table.request()
 </script>
