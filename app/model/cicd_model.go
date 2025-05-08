@@ -52,9 +52,9 @@ type ServiceTable struct {
 	ID              int64          `json:"id"`
 	Name            string         `json:"name"`
 	ProjectName     string         `json:"project_name"`
-	EnvName         string         `json:"env_name"`
 	CodeLibraryName string         `json:"code_library_name"`
-	DeployMap       datatypes.JSON `json:"deploy_map"`
+	Clusters        datatypes.JSON `json:"clusters"`
+	CICDMap         datatypes.JSON `json:"cicd_map"`
 	CreatedAt       time.Time      `json:"created_at"`
 	UpdatedAt       time.Time      `json:"updated_at"`
 }
