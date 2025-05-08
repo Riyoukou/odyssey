@@ -25,14 +25,16 @@
     <div
       class="flex flex-col flex-1 bg-white dark:bg-[var(--el-bg-color)] overflow-hidden"
       :class="{ 'full-screen-view': fullScreen }"
-    >
-      <RouterView v-slot="{ Component, route }">
-        <transition appear name="el-fade-in-linear" mode="out-in">
-          <KeepAlive :include="keepAliveNames">
-            <component :is="Component" :key="routeKeyMap[route.path] || route.path" class="h-full relative p-[10px]" />
-          </KeepAlive>
-        </transition>
-      </RouterView>
+    >  
+      <el-scrollbar height="100%">
+        <RouterView v-slot="{ Component, route }">
+          <transition appear name="el-fade-in-linear" mode="out-in">
+            <KeepAlive :include="keepAliveNames">
+              <component :is="Component" :key="routeKeyMap[route.path] || route.path" class="h-full relative p-[10px]" />
+            </KeepAlive>
+          </transition>
+        </RouterView>
+      </el-scrollbar>
     </div>
   </ElMain>
   <!-- 页脚 -->

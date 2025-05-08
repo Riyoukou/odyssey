@@ -74,6 +74,16 @@ export const dynamicRoutes = [
     component: () => import('@/views/cicdToolTable/cicdToolTable.vue')
   },
   {
+    path: '/cicd',
+    name: 'cicd',
+    meta: {
+      title: 'CICD',
+      icon: 'Menu',
+      roles: ['admin','user']
+    },
+    component: () => import('@/views/cicd/cicdDetail.vue')
+  },
+  {
     path: '/userTable',
     name: 'userTable',
     meta: {
