@@ -72,7 +72,7 @@
             filterable
           >
             <ElOption  
-                v-for="item in table.filtereCodeLibraryData" 
+                v-for="item in table.codeLibraryData" 
                 :key="item.name" 
                 :label="item.name" 
                 :value="item.name" 
@@ -175,7 +175,6 @@ const editForm = reactive({
    editForm.model.name = item.name,
    editForm.model.url = item.web_url,
    editForm.model.project_id = item.id
-   console.log(editForm.model)
   },
   submit: () => {
     editForm.ref?.validate().then(() => {
@@ -193,7 +192,6 @@ const table = reactive({
   projectData: [] as any[],
   codeLibraryData: [] as any[],
   gitProjectData: [] as any[],
-  filtereCodeLibraryData: [] as any[],
   filteredData: [] as any[],
   request: () => {
     table.loading = true
@@ -214,7 +212,7 @@ const table = reactive({
     table.loading = true
     http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/cicd_tool`).then((res: any) => {
       table.codeLibraryData = res.data
-      table.filtereCodeLibraryData = table.codeLibraryData.filter( tool => tool.type === 'git')
+      table.codeLibraryData = table.codeLibraryData.filter( tool => tool.type === 'git')
       table.loading = false
     })
   },

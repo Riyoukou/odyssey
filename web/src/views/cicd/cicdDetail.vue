@@ -7,24 +7,34 @@
       </template>
       <ElForm label-width="100px">
         <ElFormItem label="是否 GitOps">
-          <ElSwitch v-model="editForm.yaml.isGitOps" />
+          <ElSwitch v-model="editForm.model.yaml.isGitOps" />
         </ElFormItem>
 
-        <template v-if="editForm.yaml.isGitOps">
+        <template v-if="editForm.model.yaml.isGitOps">
           <ElFormItem label="GitOps 库">
-            <ElSelect v-model="editForm.yaml.gitopsrepo" placeholder="请选择 GitOps 库" class="w-full" >
-              <ElOption label="devopscd" value="devopscd" />
+            <ElSelect 
+              v-model="editForm.model.yaml.gitopsrepo" 
+              placeholder="请选择 GitOps 库" 
+              class="w-full" 
+              @focus="service.requestCodeSource()"
+            >
+              <ElOption  
+                v-for="item in service.codeLibraryData" 
+                :key="item.name" 
+                :label="item.name" 
+                :value="item.name" 
+              />
             </ElSelect>
           </ElFormItem>
 
           <ElFormItem label="GitOps 类型">
-            <ElSelect v-model="editForm.yaml.gitopsType" placeholder="选择 GitOps 类型" class="w-full">
+            <ElSelect v-model="editForm.model.yaml.gitopsType" placeholder="选择 GitOps 类型" class="w-full">
               <ElOption label="Kustomize" value="kustomize" />
             </ElSelect>
           </ElFormItem>
 
           <ElFormItem label="GitOps 路径">
-            <ElInput v-model="editForm.yaml.filePath" placeholder="请输入文件路径" class="w-full" />
+            <ElInput v-model="editForm.model.yaml.filePath" placeholder="请输入文件路径" class="w-full" />
           </ElFormItem>
         </template>
 
@@ -34,7 +44,7 @@
             :error="yamlError"
           >
             <ElInput
-              v-model="editForm.yaml.content"
+              v-model="editForm.model.yaml.content"
               type="textarea"
               rows="6"
               placeholder="请输入合法的 YAML 内容"
@@ -57,7 +67,7 @@
           <h3 class="text-md font-semibold mb-2">构建任务变量</h3>
 
           <ElFormItem
-            v-for="(item, index) in editForm.build.param"
+            v-for="(item, index) in editForm.model.build.param"
             :key="index"
             :label="`变量 ${index + 1}`"
           >
@@ -72,31 +82,31 @@
           </ElFormItem>
 
           <ElFormItem label="CI类型">
-            <ElSelect v-model="editForm.build.type" placeholder="选择类型" class="w-full">
+            <ElSelect v-model="editForm.model.build.type" placeholder="选择类型" class="w-full">
               <ElOption label="Jenkins" value="jenkins" />
             </ElSelect>
           </ElFormItem>
 
-          <ElFormItem label="CICD 工具" v-if="editForm.build.type === 'jenkins'" >
-            <ElSelect placeholder="请选择工具" @focus="service.requestCICDToolsData()">
+          <ElFormItem label="CICD 工具" v-if="editForm.model.build.type === 'jenkins'" >
+            <ElSelect placeholder="请选择工具" v-model="editForm.model.build.cicd_tool" @focus="service.requestCICDToolsData()">
               <ElOption  
-                v-for="item in filteredCicdTools(editForm.build.type)" 
+                v-for="item in filteredCicdTools(editForm.model.build.type)" 
                 :key="item.name" 
-                :label="item.type" 
+                :label="item.name" 
                 :value="item.name" 
               />
             </ElSelect>
           </ElFormItem>
 
-          <template v-if="editForm.build.type === 'jenkins'">
+          <template v-if="editForm.model.build.type === 'jenkins'">
             <ElFormItem label="Job URL">
-              <ElInput v-model="editForm.build.job_url" placeholder="Jenkins Job URL" class="w-full" />
+              <ElInput v-model="editForm.model.build.job_url" placeholder="Jenkins Job URL" class="w-full" />
             </ElFormItem>
 
             <ElFormItem label="参数选择">
-              <ElSelect v-model="editForm.build.job_param" multiple placeholder="参数" class="w-full">
+              <ElSelect v-model="editForm.model.build.job_param" multiple placeholder="参数" class="w-full">
                 <ElOption
-                  v-for="param in editForm.build.param"
+                  v-for="param in editForm.model.build.param"
                   :key="param.key"
                   :label="param.key"
                   :value="param.key"
@@ -114,7 +124,7 @@
         </template>
         <ElForm label-width="100px">
           <ElFormItem label="负载类型">
-            <ElSelect v-model="editForm.release.workload" placeholder="负载类型" class="w-full">
+            <ElSelect v-model="editForm.model.release.workload" placeholder="负载类型" class="w-full">
               <ElOption label="Deployment" value="deployment" />
               <ElOption label="StatefulSet" value="statefulset" />
               <ElOption label="DaemonSet" value="daemonset" />
@@ -123,33 +133,33 @@
           </ElFormItem>
 
           <ElFormItem label="发布策略类型">
-            <ElSelect v-model="editForm.release.deployType" placeholder="发布类型" class="w-full">
+            <ElSelect v-model="editForm.model.release.deployType" placeholder="发布类型" class="w-full">
               <ElOption label="KruiseCanary" value="kruise_canary" />
               <ElOption label="KruiseBlueGreen" value="kruise_blue_green" />
             </ElSelect>
           </ElFormItem>
 
           <ElFormItem label="CD类型">
-            <ElSelect v-model="editForm.release.type" placeholder="选择类型" class="w-full">
+            <ElSelect v-model="editForm.model.release.type" placeholder="选择类型" class="w-full">
               <ElOption label="Argocd" value="argocd" />
             </ElSelect>
           </ElFormItem>
 
-          <ElFormItem label="CICD 工具" v-if="editForm.release.type === 'argocd'" >
-            <ElSelect placeholder="请选择工具" @focus="service.requestCICDToolsData()">
+          <ElFormItem label="CICD 工具" v-if="editForm.model.release.type === 'argocd'" >
+            <ElSelect placeholder="请选择工具" v-model="editForm.model.release.cicd_tool" @focus="service.requestCICDToolsData()">
               <ElOption  
-                v-for="item in filteredCicdTools(editForm.release.type)" 
+                v-for="item in filteredCicdTools(editForm.model.release.type)" 
                 :key="item.name" 
-                :label="item.type" 
+                :label="item.name" 
                 :value="item.name" 
               />
             </ElSelect>
           </ElFormItem>
 
-          <template v-if="editForm.release.type === 'argocd'">
+          <template v-if="editForm.model.release.type === 'argocd'">
             <ElFormItem label="Argocd 应用">
               <ElInput
-                v-model="editForm.release.argocd_application"
+                v-model="editForm.model.release.argocd_application"
                 placeholder="Argocd Application"
                 class="w-full"
               />
@@ -178,64 +188,66 @@ import yaml from 'yaml';
 import http from '@/api'
 
 const editForm = reactive({
-  yaml: {
-    isGitOps: true,
-    gitopsrepo: '',
-    gitopsType: '',
-    filePath: '',
-    content: '',
-  },
-  build: {
-    param: [{ key: '' }],
-    type: '',
-    cicd_tool: '',
-    job_url: '',
-    job_param: [],
-  },
-  release: {
-    deployType: '',
-    workload: '',
-    type: '',
-    cicd_tool: '',
-    argocd_application: '',
+  model: {
+    yaml: {
+      isGitOps: true,
+      gitopsrepo: '',
+      gitopsType: '',
+      filePath: '',
+      content: '',
+    },
+    build: {
+      param: [{ key: '' }],
+      type: '',
+      cicd_tool: '',
+      job_url: '',
+      job_param: [],
+    },
+    release: {
+      deployType: '',
+      workload: '',
+      type: '',
+      cicd_tool: '',
+      argocd_application: '',
+    }
   }
 });
 
-const addBuildVar = () => editForm.build.param.push({ key: '' });
-const removeBuildVar = (i: number) => editForm.build.param.splice(i, 1);
+const addBuildVar = () => editForm.model.build.param.push({ key: '' });
+const removeBuildVar = (i: number) => editForm.model.build.param.splice(i, 1);
 
 const exportData = ref({});
 const exportJson = () => {
   exportData.value = {
-  yaml: {
-    isGitOps: true,
-    gitopsrepo: '',
-    gitopsType: '',
-    filePath: '',
-    content: '',
-  },
-  build: {
-    type: '',
-    cicd_tool: '',
-    job_url: '',
-    job_param: [],
-  },
-  release: {
-    deployType: '',
-    workload: '',
-    type: '',
-    cicd_tool: '',
-    argocd_application: '',
-  }
+    yaml: {
+      isGitOps: editForm.model.yaml.isGitOps,
+      gitopsrepo: editForm.model.yaml.gitopsrepo,
+      gitopsType: editForm.model.yaml.gitopsType,
+      filePath: editForm.model.yaml.filePath,
+      content: editForm.model.yaml.content,
+    },
+    build: {
+      type: editForm.model.build.type,
+      cicd_tool: editForm.model.build.cicd_tool,
+      job_url: editForm.model.build.job_url,
+      job_param: editForm.model.build.job_param,
+    },
+    release: {
+      deployType: editForm.model.release.deployType,
+      workload: editForm.model.release.workload,
+      type: editForm.model.release.type,
+      cicd_tool: editForm.model.release.cicd_tool,
+      argocd_application: editForm.model.release.argocd_application,
+    }
   };
 };
 
 const yamlError = ref('');
 
 const validateYaml = () => {
-  if (!editForm.yaml.isGitOps && editForm.yaml.content.trim()) {
+  if (!editForm.model.yaml.isGitOps && editForm.model.yaml.content.trim()) {
     try {
-      yaml.parse(editForm.yaml.content);
+      yaml.parse(editForm.model.yaml.content);
       yamlError.value = '';
     } catch (e) {
       yamlError.value = 'YAML 格式错误';
@@ -248,6 +260,7 @@ const validateYaml = () => {
 const service = reactive({
   loading: false,
   cicdToolsData: [] as any[],
+  codeLibraryData: [] as any[],
   requestCICDToolsData: () => {
     service.loading = true
     http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/cicd_tool`).then((res: any) => {
@@ -255,6 +268,14 @@ const service = reactive({
       service.loading = false
     })
   },
+  requestCodeSource: () => {
+    service.loading = true
+    http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/code_library`).then((res: any) => {
+      service.codeLibraryData = res.data
+      service.codeLibraryData = service.codeLibraryData.filter( tool => tool.type === 'gitops')
+      service.loading = false
+    })
+  }
 });
 
 
