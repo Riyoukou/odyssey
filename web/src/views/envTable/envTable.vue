@@ -64,7 +64,7 @@
           </ElSelect>
         </ElFormItem>
         <ElFormItem label="项目名称" prop="project_name">
-          <ElSelect disabled v-model="editForm.model.project_name" placeholder="请选择项目名称" @change="table.selectProject()">
+          <ElSelect disabled v-model="editForm.model.project_name" placeholder="请选择项目名称" @change="table.selectProject">
             <ElOption v-for="item in table.projectData" :key="item.name" :label="item.name" :value="item.name" />
           </ElSelect>
         </ElFormItem>
@@ -94,7 +94,7 @@ const search = reactive({
   },
   search: () => {
     table.filteredData = table.data.filter(
-      (data) =>
+      (data: any) =>
         data.name?.toLowerCase().includes(search.model.name.toLowerCase())
     );
   },
@@ -169,9 +169,9 @@ const table = reactive({
   loading: false,
   border: true,
   activeProject: '请选择项目名称',
-  data: [],
-  filteredData: [],
-  projectData: [],
+  data: [] as any[],
+  filteredData: [] as any[],
+  projectData: [] as any[],
   request: () => {
     table.loading = true
     http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/env?project=${table.activeProject}`).then((res: any) => {

@@ -56,10 +56,10 @@
       >
         <template v-if="editForm.state === 'editPassword'">
           <ElFormItem label="当前密码" prop="old_password">
-            <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.old_password" placeholder="请输入" />
+            <ElInput  v-model="editForm.model.old_password" placeholder="请输入" />
           </ElFormItem>
           <ElFormItem label="新的密码" prop="new_password" >
-            <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.new_password" placeholder="请输入" />
+            <ElInput  v-model="editForm.model.new_password" placeholder="请输入" />
           </ElFormItem>
         </template>
         <template v-else>
@@ -97,7 +97,7 @@ const search = reactive({
   },
   search: () => {
     table.filteredData = table.data.filter(
-      (data) =>
+      (data: any) =>
         data.name?.toLowerCase().includes(search.model.name.toLowerCase())
     );
   },
@@ -192,9 +192,8 @@ const editForm = reactive({
 const table = reactive({
   loading: false,
   border: true,
-  data: [],
-  filteredData: [],
-  credentialData:[],
+  data: [] as any[],
+  filteredData: [] as any[],
   request: () => {
     table.loading = true
     http.get(import.meta.env.VITE_APP_BASE_URL + `/user/fetch/user`).then((res: any) => {

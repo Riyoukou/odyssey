@@ -53,7 +53,7 @@
       </ElForm>
       <template #footer>
         <ElButton v-if="editForm.state === 'add'" type="primary" @click="editForm.submit">提交</ElButton>
-        <ElButton v-else-if="editForm.state === 'edit'" type="primary" @click="editForm.editSubmit">提交</ElButton>
+        <ElButton v-else-if="editForm.state === 'edit'" type="primary" @click="">提交</ElButton>
       </template>
     </ElDialog>
   </div>
@@ -73,7 +73,7 @@ const search = reactive({
   },
   search: () => {
     table.filteredData = table.data.filter(
-      (data) =>
+      (data: any) =>
         data.name?.toLowerCase().includes(search.model.name.toLowerCase())
     );
   },
@@ -130,8 +130,8 @@ const editForm = reactive({
 const table = reactive({
   loading: false,
   border: true,
-  data: [],
-  filteredData: [],
+  data: [] as any[],
+  filteredData: [] as any[],
   request: () => {
     table.loading = true
     http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/project`).then((res: any) => {

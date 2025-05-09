@@ -5,18 +5,6 @@
       <ElFormItem label="姓名" prop="name">
         <ElInput v-model="search.model.name" placeholder="请输入姓名" />
       </ElFormItem>
-      <ElFormItem label="年龄" prop="age">
-        <ElSelect v-model="search.model.age" placeholder="请选择年龄" @change="(v: string) => console.log(v)">
-          <ElOption label="12" value="12" />
-          <ElOption label="13" value="13" />
-        </ElSelect>
-      </ElFormItem>
-      <ElFormItem label="邮件" prop="email">
-        <ElInput v-model="search.model.email" placeholder="请输入邮件" />
-      </ElFormItem>
-      <ElFormItem label="出生日期" prop="date">
-        <ElDatePicker v-model="search.model.date" type="datetime" placeholder="选择出生日期" />
-      </ElFormItem>
       <div class="flex justify-center mb-3">
         <ElButton icon="RefreshRight" @click="search.reset">重置</ElButton>
         <ElButton type="primary" icon="Search" @click="search.search">查询</ElButton>
@@ -87,7 +75,7 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive } from 'vue'
+import { ref,reactive } from 'vue'
 import type { FormInstance } from 'element-plus'
 import http from '@/api'
 
@@ -100,7 +88,7 @@ const search = reactive({
   },
   search: () => {
     table.filteredData = table.data.filter(
-      (data) =>
+      (data: any) =>
         data.name?.toLowerCase().includes(search.model.name.toLowerCase())
     );
   },
@@ -146,8 +134,8 @@ const editForm = reactive({
 const table = reactive({
   loading: false,
   border: true,
-  data: [],
-  filteredData: [],
+  data: [] as any[],
+  filteredData: [] as any[],
   page: {
     sortOrder: null,
     sortProp: '',

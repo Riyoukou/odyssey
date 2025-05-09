@@ -115,7 +115,7 @@ const search = reactive({
   },
   search: () => {
     table.filteredData = table.data.filter(
-      (data) =>
+      (data: any) =>
         data.name?.toLowerCase().includes(search.model.name.toLowerCase())
     );
   },
@@ -192,9 +192,9 @@ const editForm = reactive({
 const table = reactive({
   loading: false,
   border: true,
-  data: [],
-  filteredData: [],
-  credentialData:[],
+  data: [] as any[],
+  filteredData: [] as any[],
+  credentialData:[] as any[],
   request: () => {
     table.loading = true
     http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/cicd_tool`).then((res: any) => {
