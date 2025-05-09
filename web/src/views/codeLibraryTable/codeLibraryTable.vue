@@ -30,9 +30,9 @@
       <el-table-column type="selection" width="55" />
       <el-table-column prop="name" label="代码库名称" sortable width="200" />
       <el-table-column prop="type" label="代码库类型" sortable width="200" />
-      <el-table-column prop="url" label="代码库描述信息" />
-      <el-table-column prop="code_source_name" label="代码库描述信息" />
-      <el-table-column prop="project_name" label="代码库描述信息" />
+      <el-table-column prop="url" label="代码库地址" />
+      <el-table-column prop="code_source_name" label="代码源名称" />
+      <el-table-column prop="project_name" label="所属项目" />
       <el-table-column label="操作" fixed="right" width="120">
         <template #default="{ row }">
           <el-button link type="primary" @click="editForm.toView(row)">查看</el-button>
