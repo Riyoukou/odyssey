@@ -6,6 +6,37 @@ import (
 	"gorm.io/datatypes"
 )
 
+// ServiceCICDForm
+
+type ServiceCICDForm struct {
+	Yaml    YamlSection    `json:"yaml"`
+	Build   BuildSection   `json:"build"`
+	Release ReleaseSection `json:"release"`
+}
+
+type YamlSection struct {
+	IsGitOps   bool   `json:"isGitOps"`
+	GitOpsRepo string `json:"gitopsrepo"`
+	GitOpsType string `json:"gitopsType"`
+	FilePath   string `json:"filePath"`
+	Content    string `json:"content"`
+}
+
+type BuildSection struct {
+	Type     string        `json:"type"`
+	CICDTool string        `json:"cicd_tool"`
+	JobURL   string        `json:"job_url"`
+	JobParam []interface{} `json:"job_param"` // 可根据实际结构替换为具体类型
+}
+
+type ReleaseSection struct {
+	DeployType        string `json:"deployType"`
+	Workload          string `json:"workload"`
+	Type              string `json:"type"`
+	CICDTool          string `json:"cicd_tool"`
+	ArgoCDApplication string `json:"argocd_application"`
+}
+
 // repository_model
 type ClusterTable struct {
 	ID          int64     `json:"id"`

@@ -4,13 +4,21 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/Riyoukou/odyssey/app/model"
 	"github.com/Riyoukou/odyssey/app/repository"
+	"github.com/Riyoukou/odyssey/app/service"
 	"github.com/Riyoukou/odyssey/app/utils"
 	"github.com/Riyoukou/odyssey/pkg/response"
 	"github.com/gin-gonic/gin"
 )
+
+func HandleServiceCICDMap(c *gin.Context) {
+	service.ServiceCICDMap(c.Query("action"), strings.Split(c.Query("clusters"), ","))
+	response.Success(c, nil, "OK")
+
+}
 
 func HandleCICDFetch(c *gin.Context) {
 	var (
