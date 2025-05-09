@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/Riyoukou/odyssey/app/model"
-	"github.com/Riyoukou/odyssey/app/utils"
 	"github.com/Riyoukou/odyssey/pkg/logger"
 )
 
@@ -286,65 +285,6 @@ func UpdateCodeLibraryByNameAndProject(codeLibrary model.CodeLibraryTable) error
 	return nil
 }
 
-// code_source
-func FetchCodeSources() ([]model.CodeSourceTable, error) {
-	var codeSources []model.CodeSourceTable
-	if err := DB.Find(&codeSources).Error; err != nil {
-		logger.Errorf("Failed to fetch code sources: %v", err)
-		return nil, err
-	}
-
-	return codeSources, nil
-}
-
-func CreateCodeSource(codeSource model.CodeSourceTable) error {
-	if err := DB.Where("name = ?", codeSource.Name).
-		First(&model.CodeSourceTable{}).Error; err == nil {
-		logger.Errorf("Code source already exists: name=%s", codeSource.Name)
-		return err
-	}
-	codeSource.PrivateToken = base64.StdEncoding.EncodeToString([]byte(codeSource.PrivateToken))
-	if err := DB.Create(&codeSource).Error; err != nil {
-		logger.Errorf("Failed to create code source: %v", err)
-		return err
-	}
-
-	return nil
-}
-
-func DeleteCodeSource(codeSourceID int64) error {
-	if err := DB.Delete(&model.CodeSourceTable{}, codeSourceID).Error; err != nil {
-		logger.Errorf("Failed to delete code source: %v", err)
-		return err
-	}
-
-	return nil
-}
-
-func GetCodeSourceByName(name string) (model.CodeSourceTable, error) {
-	var codeSource model.CodeSourceTable
-	if err := DB.Where("name = ?", name).
-		First(&codeSource).Error; err != nil {
-		return model.CodeSourceTable{}, err
-	}
-	// Base64 解码 kubeconfig
-	privateToken, err := base64.StdEncoding.DecodeString(codeSource.PrivateToken)
-	if err != nil {
-		return model.CodeSourceTable{}, fmt.Errorf("invalid private token encoding: %w", err)
-	}
-	codeSource.PrivateToken = string(privateToken)
-	return codeSource, nil
-}
-
-func UpdateCodeSourceByName(codeSource model.CodeSourceTable) error {
-	if err := DB.Model(&model.CodeSourceTable{}).Where("name = ?", codeSource.Name).Updates(codeSource).Error; err != nil {
-		logger.Errorf("Failed to update code source: %v", err)
-		return err
-	}
-
-	return nil
-}
-
 // cicd_build_record
 func FetchBuildRecordsByProjectName(projectName string) ([]model.BuildRecordTable, error) {
 	var records []model.BuildRecordTable
@@ -529,7 +469,6 @@ func GetCredentialByName(name string) (model.CredentialTable, error) {
 		return model.CredentialTable{}, fmt.Errorf("invalid credential data encoding: %w", err)
 	}
 	credential.Data = string(dataBytes)
-	utils.CreateKubernetesClientset(credential.Data)
 	return credential, nil
 }
 

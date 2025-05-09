@@ -67,8 +67,10 @@ type CodeLibraryTable struct {
 	ID             int64     `json:"id"`
 	Name           string    `json:"name"`
 	ProjectName    string    `json:"project_name"`
+	Type           string    `json:"type"`
 	URL            string    `json:"url"`
 	CodeSourceName string    `json:"code_source_name"`
+	ProjectID      int64     `json:"project_id"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 }

@@ -133,7 +133,7 @@ const editForm = reactive({
     editForm.model = {
       name: '',
       type: '',
-      project_name: '',
+      project_name: table.activeProject,
       namespace: '',
     }
     table.fetchProject()

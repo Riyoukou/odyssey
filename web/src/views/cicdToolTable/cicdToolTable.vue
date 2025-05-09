@@ -78,8 +78,19 @@
           <ElInput disabled v-else v-model="editForm.model.credential_type"/>
         </ElFormItem>
         <ElFormItem label="凭证名称" prop="credential_name">
-          <ElSelect v-if="editForm.state !== 'view'" v-model="editForm.model.credential_name" placeholder="请选择工具凭证" @focus="table.selectConfig">
-            <ElOption  v-for="item in table.credentialData" :key="item.name" :label="item.type+'/'+item.name" :value="item.name" />
+          <ElSelect 
+            v-if="editForm.state !== 'view'" 
+            v-model="editForm.model.credential_name" 
+            placeholder="请选择工具凭证" 
+            @focus="table.selectConfig"
+            filterable
+          >
+            <ElOption  
+              v-for="item in table.credentialData" 
+              :key="item.name" 
+              :label="item.type+'/'+item.name" 
+              :value="item.name" 
+            />
           </ElSelect>
           <ElInput disabled v-else v-model="editForm.model.credential_name" />
         </ElFormItem>

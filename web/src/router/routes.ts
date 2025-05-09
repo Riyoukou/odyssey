@@ -74,6 +74,16 @@ export const dynamicRoutes = [
     component: () => import('@/views/cicdToolTable/cicdToolTable.vue')
   },
   {
+    path: '/codeLibraryTable',
+    name: 'codeLibraryTable',
+    meta: {
+      title: '代码库列表',
+      icon: 'Menu',
+      roles: ['admin','user']
+    },
+    component: () => import('@/views/codeLibraryTable/codeLibraryTable.vue')
+  },
+  {
     path: '/cicd',
     name: 'cicd',
     meta: {

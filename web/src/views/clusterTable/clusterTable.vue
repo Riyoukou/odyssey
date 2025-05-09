@@ -64,7 +64,13 @@
           <ElInput :disabled="editForm.state === 'view'" v-model="editForm.model.version" placeholder="请输入集群版本" />
         </ElFormItem>
         <ElFormItem label="集群凭证" prop="config">
-          <ElSelect v-if="editForm.state !== 'view'" v-model="editForm.model.config" placeholder="请选择集群凭证" @focus="table.selectConfig">
+          <ElSelect 
+            v-if="editForm.state !== 'view'" 
+            v-model="editForm.model.config" 
+            placeholder="请选择集群凭证" 
+            @focus="table.selectConfig"
+            filterable
+          >
             <ElOption  v-for="item in table.credentialData" :key="item.name" :label="item.name" :value="item.name" />
           </ElSelect>
           <ElInput disabled v-else v-model="editForm.model.config" placeholder="请输入集群凭证" />

@@ -7,6 +7,7 @@ import (
 
 	"github.com/Riyoukou/odyssey/app/model"
 	"github.com/Riyoukou/odyssey/app/repository"
+	"github.com/Riyoukou/odyssey/app/utils"
 	"github.com/Riyoukou/odyssey/pkg/response"
 	"github.com/gin-gonic/gin"
 )
@@ -27,8 +28,6 @@ func HandleCICDFetch(c *gin.Context) {
 		result, err = repository.FetchServicesByProjectAndEnv(c.Query("project"), c.Query("env"))
 	case "code_library":
 		result, err = repository.FetchCodeLibraries()
-	case "code_source":
-		result, err = repository.FetchCodeSources()
 	case "build_record":
 		result, err = repository.FetchBuildRecordsByProjectName(c.Query("project"))
 	case "deploy_record":
@@ -37,6 +36,10 @@ func HandleCICDFetch(c *gin.Context) {
 		result, err = repository.FetchCredentials()
 	case "cicd_tool":
 		result, err = repository.FetchCICDTools()
+	case "git_project":
+		cicdTool, _ := repository.GetCICDToolByName(c.Query("cicd_tool"))
+		credential, _ := repository.GetCredentialByName(cicdTool.CredentialName)
+		result = utils.GetGitlabProjects(cicdTool.URL+"/api/v4/projects?simple=true&per_page=100", credential.Data)
 	}
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err)
@@ -61,8 +64,6 @@ func HandleCICDGet(c *gin.Context) {
 		result, err = repository.GetServiceByNameAndProjectByEnv(c.Query("name"), c.Query("project"), c.Query("env"))
 	case "code_library":
 		result, err = repository.GetCodeLibraryByNameAndProject(c.Query("name"), c.Query("project"))
-	case "code_source":
-		result, err = repository.GetCodeSourceByName(c.Query("name"))
 	case "build_service_record":
 		result, err = repository.GetBuildServiceRecordsByBuildRecordName(c.Query("build_record"))
 	case "deploy_service_record":
@@ -137,12 +138,6 @@ func HandleCICDCreate(c *gin.Context) {
 			break
 		}
 		err = repository.CreateCodeLibrary(req)
-	case "code_source":
-		var req model.CodeSourceTable
-		if err = c.ShouldBind(&req); err != nil {
-			break
-		}
-		err = repository.CreateCodeSource(req)
 	case "credential":
 		var req model.CredentialTable
 		if err = c.ShouldBind(&req); err != nil {
@@ -196,12 +191,6 @@ func HandleCICDUpdate(c *gin.Context) {
 			break
 		}
 		err = repository.UpdateCodeLibraryByNameAndProject(req)
-	case "code_source":
-		var req model.CodeSourceTable
-		if err = c.ShouldBind(&req); err != nil {
-			break
-		}
-		err = repository.UpdateCodeSourceByName(req)
 	case "cicd_tool":
 		var req model.CICDToolTable
 		if err = c.ShouldBind(&req); err != nil {
