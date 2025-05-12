@@ -1,4 +1,5 @@
 <template>
+            <router-view />
   <div class="flex flex-col overflow-auto">
     <!-- 搜索表单 -->
     <ElForm v-if="search.show" :model="search.model" ref="searchRef" label-width="80px">

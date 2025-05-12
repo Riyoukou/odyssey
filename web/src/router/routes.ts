@@ -33,34 +33,14 @@ export const dynamicRoutes = [
     },
     children: [
       {
-        path: '/cicd/clusterTable',
-        name: 'clusterTable',
+        path: '/cicd/cicdOption',
+        name: 'cicdOption',
         meta: {
-          title: '集群列表',
+          title: '资源设置',
           icon: 'Menu',
           roles: ['admin','user']
         },
-        component: () => import('@/views/cicd/clusterTable/clusterTable.vue')
-      },
-      {
-        path: '/cicd/projectTable',
-        name: 'projectTable',
-        meta: {
-          title: '项目列表',
-          icon: 'Menu',
-          roles: ['admin','user']
-        },
-        component: () => import('@/views/cicd/projectTable/projectTable.vue')
-      },
-      {
-        path: '/cicd/envTable',
-        name: 'envTable',
-        meta: {
-          title: '环境列表',
-          icon: 'Menu',
-          roles: ['admin','user']
-        },
-        component: () => import('@/views/cicd/envTable/envTable.vue')
+        component: () => import('@/views/cicd/cicdOption/main.vue')
       },
       {
         path: '/cicd/serviceTable',
@@ -70,42 +50,13 @@ export const dynamicRoutes = [
           icon: 'Menu',
           roles: ['admin','user']
         },
-        component: () => import('@/views/cicd/serviceTable/serviceTable.vue')
-      },
-      {
-        path: '/cicd/credentialTable',
-        name: 'credentialTable',
-        meta: {
-          title: '凭证列表',
-          icon: 'Menu',
-          roles: ['admin','user']
-        },
-        component: () => import('@/views/cicd/credentialTable/credentialTable.vue')
-      },
-      {
-        path: '/cicd/cicdToolTable',
-        name: 'cicdToolTable',
-        meta: {
-          title: 'CICD工具列表',
-          icon: 'Menu',
-          roles: ['admin','user']
-        },
-        component: () => import('@/views/cicd/cicdToolTable/cicdToolTable.vue')
-      },
-      {
-        path: '/cicd/codeLibraryTable',
-        name: 'codeLibraryTable',
-        meta: {
-          title: '代码库列表',
-          icon: 'Menu',
-          roles: ['admin','user']
-        },
-        component: () => import('@/views/cicd/codeLibraryTable/codeLibraryTable.vue')
+        component: () => import('@/views/cicd/serviceTable/serviceTable.vue'),
       },
       {
         path: '/cicd/cicd',
         name: 'cicd',
         meta: {
+          hidden: true,
           title: 'CICD',
           icon: 'Menu',
           roles: ['admin','user']
