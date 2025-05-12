@@ -7,49 +7,41 @@ import (
 	"github.com/Riyoukou/odyssey/app/model"
 )
 
-func ServiceCICDMap(action string, clusters []string) {
-	// 初始已有集群数据
-	clusterMap := map[string][]model.ServiceCICDForm{
-		"ctyun-huabei2-ccse01": {{
-			Yaml:    model.YamlSection{IsGitOps: true},
-			Build:   model.BuildSection{CICDTool: "existing-tool"},
-			Release: model.ReleaseSection{},
-		}},
-	}
-
+func ServiceCICDMap(cicdMap map[string][]model.ServiceCICDForm, action string, clusters []string, updateData model.ServiceCICDForm) []byte {
 	// 定义空模板
-	empty := model.ServiceCICDForm{
-		Yaml:    model.YamlSection{IsGitOps: true},
-		Build:   model.BuildSection{JobParam: []interface{}{}},
-		Release: model.ReleaseSection{},
-	}
+	empty := model.ServiceCICDForm{}
 
-	if action == "add" {
+	switch action {
+	case "create":
 		for _, name := range clusters {
-			if _, exists := clusterMap[name]; !exists {
-				clusterMap[name] = []model.ServiceCICDForm{empty}
+			cicdMap[name] = []model.ServiceCICDForm{empty}
+		}
+	case "add":
+		for _, name := range clusters {
+			if _, exists := cicdMap[name]; !exists {
+				cicdMap[name] = []model.ServiceCICDForm{empty}
 			}
 		}
-	} else if action == "delete" {
+	case "delete":
 		for _, name := range clusters {
-			delete(clusterMap, name)
+			delete(cicdMap, name)
 		}
-	} else if action == "update" {
+	case "update":
+		fmt.Println(updateData)
 		for _, name := range clusters {
-			if _, exists := clusterMap[name]; exists {
-				clusterMap[name][0] = model.ServiceCICDForm{
-					Yaml:    model.YamlSection{IsGitOps: true, GitOpsRepo: "https://git.example.com/repo"},
-					Build:   model.BuildSection{CICDTool: "new-tool", JobURL: "http://ci.example.com/job"},
-					Release: model.ReleaseSection{DeployType: "argo"},
-				}
+			if _, exists := cicdMap[name]; exists {
+				cicdMap[name][0] = updateData
 			}
 		}
+	case "get":
 	}
 
 	// 输出结果
-	jsonBytes, err := json.MarshalIndent(clusterMap, "", "  ")
+	jsonBytes, err := json.MarshalIndent(cicdMap, "", "  ")
+
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(string(jsonBytes))
+
+	return jsonBytes
 }

@@ -24,74 +24,95 @@ export const dynamicRoutes = [
     component: () => import('@/views/table/baseTable.vue')
   },
   {
-    path: '/clusterTable',
-    name: 'clusterTable',
-    meta: {
-      title: '集群列表',
-      icon: 'Menu',
-      roles: ['admin','user']
-    },
-    component: () => import('@/views/clusterTable/clusterTable.vue')
-  },
-  {
-    path: '/projectTable',
-    name: 'projectTable',
-    meta: {
-      title: '项目列表',
-      icon: 'Menu',
-      roles: ['admin','user']
-    },
-    component: () => import('@/views/projectTable/projectTable.vue')
-  },
-  {
-    path: '/envTable',
-    name: 'envTable',
-    meta: {
-      title: '环境列表',
-      icon: 'Menu',
-      roles: ['admin','user']
-    },
-    component: () => import('@/views/envTable/envTable.vue')
-  },
-  {
-    path: '/credentialTable',
-    name: 'credentialTable',
-    meta: {
-      title: '凭证列表',
-      icon: 'Menu',
-      roles: ['admin','user']
-    },
-    component: () => import('@/views/credentialTable/credentialTable.vue')
-  },
-  {
-    path: '/cicdToolTable',
-    name: 'cicdToolTable',
-    meta: {
-      title: 'CICD工具列表',
-      icon: 'Menu',
-      roles: ['admin','user']
-    },
-    component: () => import('@/views/cicdToolTable/cicdToolTable.vue')
-  },
-  {
-    path: '/codeLibraryTable',
-    name: 'codeLibraryTable',
-    meta: {
-      title: '代码库列表',
-      icon: 'Menu',
-      roles: ['admin','user']
-    },
-    component: () => import('@/views/codeLibraryTable/codeLibraryTable.vue')
-  },
-  {
     path: '/cicd',
-    name: 'cicd',
+    name: 'CICD',
     meta: {
+      hidden: false,
       title: 'CICD',
-      icon: 'Menu',
-      roles: ['admin','user']
+      icon: 'Menu'
     },
-    component: () => import('@/views/cicd/cicdDetail.vue')
+    children: [
+      {
+        path: '/cicd/clusterTable',
+        name: 'clusterTable',
+        meta: {
+          title: '集群列表',
+          icon: 'Menu',
+          roles: ['admin','user']
+        },
+        component: () => import('@/views/cicd/clusterTable/clusterTable.vue')
+      },
+      {
+        path: '/cicd/projectTable',
+        name: 'projectTable',
+        meta: {
+          title: '项目列表',
+          icon: 'Menu',
+          roles: ['admin','user']
+        },
+        component: () => import('@/views/cicd/projectTable/projectTable.vue')
+      },
+      {
+        path: '/cicd/envTable',
+        name: 'envTable',
+        meta: {
+          title: '环境列表',
+          icon: 'Menu',
+          roles: ['admin','user']
+        },
+        component: () => import('@/views/cicd/envTable/envTable.vue')
+      },
+      {
+        path: '/cicd/serviceTable',
+        name: 'serviceTable',
+        meta: {
+          title: '服务列表',
+          icon: 'Menu',
+          roles: ['admin','user']
+        },
+        component: () => import('@/views/cicd/serviceTable/serviceTable.vue')
+      },
+      {
+        path: '/cicd/credentialTable',
+        name: 'credentialTable',
+        meta: {
+          title: '凭证列表',
+          icon: 'Menu',
+          roles: ['admin','user']
+        },
+        component: () => import('@/views/cicd/credentialTable/credentialTable.vue')
+      },
+      {
+        path: '/cicd/cicdToolTable',
+        name: 'cicdToolTable',
+        meta: {
+          title: 'CICD工具列表',
+          icon: 'Menu',
+          roles: ['admin','user']
+        },
+        component: () => import('@/views/cicd/cicdToolTable/cicdToolTable.vue')
+      },
+      {
+        path: '/cicd/codeLibraryTable',
+        name: 'codeLibraryTable',
+        meta: {
+          title: '代码库列表',
+          icon: 'Menu',
+          roles: ['admin','user']
+        },
+        component: () => import('@/views/cicd/codeLibraryTable/codeLibraryTable.vue')
+      },
+      {
+        path: '/cicd/cicd',
+        name: 'cicd',
+        meta: {
+          title: 'CICD',
+          icon: 'Menu',
+          roles: ['admin','user']
+        },
+        component: () => import('@/views/cicd/cicdDetail.vue')
+      },
+    ]
   },
   {
     path: '/userTable',

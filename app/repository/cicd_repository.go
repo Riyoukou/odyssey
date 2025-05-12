@@ -213,6 +213,16 @@ func DeleteService(serviceID int64) error {
 	return nil
 }
 
+func GetServiceByID(id int64) (model.ServiceTable, error) {
+	var service model.ServiceTable
+	if err := DB.Where("id = ?", id).
+		First(&service).Error; err != nil {
+		return model.ServiceTable{}, err
+	}
+
+	return service, nil
+}
+
 func GetServiceByNameAndProjectByEnv(name, projectName, envName string) (model.ServiceTable, error) {
 	var service model.ServiceTable
 	if err := DB.Where("name = ? AND project_name = ? AND env_name = ?", name, projectName, envName).
@@ -224,7 +234,7 @@ func GetServiceByNameAndProjectByEnv(name, projectName, envName string) (model.S
 }
 
 func UpdateServiceByNameAndProjectByEnv(service model.ServiceTable) error {
-	if err := DB.Model(&model.ServiceTable{}).Where("name = ? AND project_name = ? AND env_name = ?", service.Name, service.ProjectName).Updates(service).Error; err != nil {
+	if err := DB.Model(&model.ServiceTable{}).Where("name = ? AND project_name = ? AND env_name = ?", service.Name, service.ProjectName, service.EnvName).Updates(service).Error; err != nil {
 		logger.Errorf("Failed to update service: %v", err)
 		return err
 	}

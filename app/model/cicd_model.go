@@ -86,6 +86,7 @@ type ServiceTable struct {
 	CodeLibraryName string         `json:"code_library_name"`
 	Clusters        datatypes.JSON `json:"clusters"`
 	CICDMap         datatypes.JSON `json:"cicd_map"`
+	EnvName         string         `json:"env_name"`
 	CreatedAt       time.Time      `json:"created_at"`
 	UpdatedAt       time.Time      `json:"updated_at"`
 }

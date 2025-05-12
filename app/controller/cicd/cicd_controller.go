@@ -1,6 +1,7 @@
 package cicd
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -15,7 +16,39 @@ import (
 )
 
 func HandleServiceCICDMap(c *gin.Context) {
-	service.ServiceCICDMap(c.Query("action"), strings.Split(c.Query("clusters"), ","))
+	var (
+		updateData model.ServiceCICDForm
+		cicdMap    map[string][]model.ServiceCICDForm
+	)
+	intID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, err)
+		return
+	}
+	result, err := repository.GetServiceByID(intID)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := c.ShouldBindJSON(&updateData); err != nil {
+		response.Error(c, http.StatusBadRequest, err)
+		return
+	}
+
+	err = json.Unmarshal(result.CICDMap, &cicdMap)
+	if err != nil {
+		return
+	}
+
+	result.CICDMap = service.ServiceCICDMap(cicdMap, c.Query("action"), strings.Split(c.Query("clusters"), ","), updateData)
+
+	err = repository.UpdateServiceByNameAndProjectByEnv(result)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, err)
+		return
+	}
+
 	response.Success(c, nil, "OK")
 
 }
@@ -135,11 +168,26 @@ func HandleCICDCreate(c *gin.Context) {
 			break
 		}*/
 	case "service":
-		var req model.ServiceTable
+		var (
+			req      model.ServiceTable
+			clusters []string
+		)
 		if err = c.ShouldBind(&req); err != nil {
 			break
 		}
+		_ = json.Unmarshal(req.Clusters, &clusters)
+		cicdMap := service.ServiceCICDMap(
+			map[string][]model.ServiceCICDForm{}, "create",
+			clusters,
+			model.ServiceCICDForm{},
+		)
+
+		req.CICDMap = cicdMap
+
 		err = repository.CreateService(req)
+		if err != nil {
+			break
+		}
 	case "code_library":
 		var req model.CodeLibraryTable
 		if err = c.ShouldBind(&req); err != nil {

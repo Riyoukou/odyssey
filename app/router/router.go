@@ -39,6 +39,6 @@ func SetupRouter(r *gin.Engine) {
 		_cicd.POST("create/:type", cicd.HandleCICDCreate)
 		_cicd.POST("update/:type", cicd.HandleCICDUpdate)
 		_cicd.DELETE("delete/:type/:id", cicd.HandleCICDDelete)
-		_cicd.POST("service/cicd_map", cicd.HandleServiceCICDMap)
+		_cicd.POST("service/cicd_map/:id", cicd.HandleServiceCICDMap)
 	}
 }
