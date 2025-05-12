@@ -53,6 +53,26 @@ export const dynamicRoutes = [
         component: () => import('@/views/cicd/serviceTable/serviceTable.vue'),
       },
       {
+        path: '/cicd/buildRecord',
+        name: 'buildRecord',
+        meta: {
+          title: '构建记录',
+          icon: 'Menu',
+          roles: ['admin','user']
+        },
+        component: () => import('@/views/cicd/buildRecord/buildRecordTable.vue'),
+      },
+      {
+        path: '/cicd/deployRecord',
+        name: 'deployRecord',
+        meta: {
+          title: '发布记录',
+          icon: 'Menu',
+          roles: ['admin','user']
+        },
+        component: () => import('@/views/cicd/deployRecord/deployRecordTable.vue'),
+      },
+      {
         path: '/cicd/cicd',
         name: 'cicd',
         meta: {

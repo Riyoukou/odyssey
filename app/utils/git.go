@@ -4,6 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+
+	"github.com/Riyoukou/odyssey/pkg/logger"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing/transport"
+	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
 type GitlabProjectApi struct {
@@ -58,4 +64,66 @@ func GetGitlabProjects(baseURL, token string) []GitlabProjectApi {
 
 	// 返回所有获取的项目
 	return allProjects
+}
+
+func GitGetTags(repoURL, token string) []string {
+	// 创建 Remote 实例
+	remote := git.NewRemote(nil, &config.RemoteConfig{
+		Name: "origin",
+		URLs: []string{repoURL},
+	})
+
+	// 可选：如果是私有仓库，需要加上 token（或留空）
+	var auth transport.AuthMethod = &githttp.BasicAuth{
+		Username: "odyssey", // 可以随便写（GitLab 要求不为空）
+		Password: token,     // GitLab 的 Personal Access Token
+	}
+	// 获取远程引用（tags、branches 等）
+	refs, err := remote.List(&git.ListOptions{
+		Auth: auth,
+	})
+	if err != nil {
+		logger.Errorf("Failed to list remote refs: %v\n", err)
+		return nil
+	}
+	var tags []string
+	// 分类标签和分支
+	for _, ref := range refs {
+		if ref.Name().IsTag() {
+			tags = append(tags, ref.Name().Short())
+		}
+	}
+
+	return tags
+}
+
+func GitGetBranches(repoURL, token string) []string {
+	// 创建 Remote 实例
+	remote := git.NewRemote(nil, &config.RemoteConfig{
+		Name: "origin",
+		URLs: []string{repoURL},
+	})
+
+	// 可选：如果是私有仓库，需要加上 token（或留空）
+	var auth transport.AuthMethod = &githttp.BasicAuth{
+		Username: "odyssey", // 可以随便写（GitLab 要求不为空）
+		Password: token,     // GitLab 的 Personal Access Token
+	}
+	// 获取远程引用（tags、branches 等）
+	refs, err := remote.List(&git.ListOptions{
+		Auth: auth,
+	})
+	if err != nil {
+		logger.Errorf("Failed to list remote refs: %v\n", err)
+		return nil
+	}
+	var branches []string
+	// 分类标签和分支
+	for _, ref := range refs {
+		if ref.Name().IsBranch() {
+			branches = append(branches, ref.Name().Short())
+		}
+	}
+
+	return branches
 }

@@ -239,35 +239,10 @@ const addBuildVar = () => {
 };
 const removeBuildVar = (i: number) => editForm.model.build.param.splice(i, 1);
 
-const exportData = ref({});
 const submitData = () => {
   console.log(editForm.model)
   service.submitCICDMap()
 }
-const exportJson = () => {
-  exportData.value = {
-    yaml: {
-      isGitOps: editForm.model.yaml.isGitOps,
-      gitopsrepo: editForm.model.yaml.gitopsrepo,
-      gitopsType: editForm.model.yaml.gitopsType,
-      filePath: editForm.model.yaml.filePath,
-      content: editForm.model.yaml.content,
-    },
-    build: {
-      type: editForm.model.build.type,
-      cicd_tool: editForm.model.build.cicd_tool,
-      job_url: editForm.model.build.job_url,
-      job_param: editForm.model.build.job_param,
-    },
-    release: {
-      deployType: editForm.model.release.deployType,
-      workload: editForm.model.release.workload,
-      type: editForm.model.release.type,
-      cicd_tool: editForm.model.release.cicd_tool,
-      argocd_application: editForm.model.release.argocd_application,
-    }
-  };
-};
 
 const yamlError = ref('');
 

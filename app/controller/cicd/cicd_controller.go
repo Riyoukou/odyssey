@@ -81,6 +81,16 @@ func HandleCICDFetch(c *gin.Context) {
 		cicdTool, _ := repository.GetCICDToolByName(c.Query("cicd_tool"))
 		credential, _ := repository.GetCredentialByName(cicdTool.CredentialName)
 		result = utils.GetGitlabProjects(cicdTool.URL+"/api/v4/projects?simple=true&per_page=100", credential.Data)
+	case "gitlab_branch":
+		codeLibrary, _ := repository.GetCodeLibraryByNameAndProject(c.Query("code_library"), c.Query("project"))
+		cicdTool, _ := repository.GetCICDToolByName(codeLibrary.CodeSourceName)
+		credential, _ := repository.GetCredentialByName(cicdTool.CredentialName)
+		result = utils.GitGetBranches(codeLibrary.URL, credential.Data)
+	case "gitlab_tag":
+		codeLibrary, _ := repository.GetCodeLibraryByNameAndProject(c.Query("code_library"), c.Query("project"))
+		cicdTool, _ := repository.GetCICDToolByName(codeLibrary.CodeSourceName)
+		credential, _ := repository.GetCredentialByName(cicdTool.CredentialName)
+		result = utils.GitGetTags(codeLibrary.URL, credential.Data)
 	}
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err)
@@ -206,6 +216,12 @@ func HandleCICDCreate(c *gin.Context) {
 			break
 		}
 		err = repository.CreateCICDTool(req)
+	case "build_record":
+		var req model.ApiBuildRecord
+		if err = c.ShouldBind(&req); err != nil {
+			break
+		}
+		err = service.CreateBuildRecord(req)
 	}
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err)
@@ -284,6 +300,8 @@ func HandleCICDDelete(c *gin.Context) {
 		err = repository.DeleteCredential(intID)
 	case "cicd_tool":
 		err = repository.DeleteCICDTool(intID)
+	case "build_record":
+		err = repository.DeleteBuildRecord(intID)
 	}
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err)

@@ -112,13 +112,9 @@
 <script lang="ts" setup>
 import { ref, reactive, computed } from 'vue'
 import { ElMessage, type FormInstance } from 'element-plus'
-import { useRouter } from 'vue-router';
-import { useRoute } from 'vue-router';
 import http from '@/api'
 import cicdMap from '@/views/cicd/serviceTable/cicdMap.vue'
 
-const router = useRouter();
-const route = useRoute();
 // 搜索表单配置
 const searchRef = ref<FormInstance | null>(null);
 const search = reactive({

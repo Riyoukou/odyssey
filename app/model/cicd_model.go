@@ -143,16 +143,16 @@ func (BuildRecordTable) TableName() string {
 }
 
 type ApiBuildRecord struct {
-	Describe    string                      `json:"describe"`
-	Env         string                      `json:"env"`
-	ProjectName string                      `json:"project_name"`
-	Services    []ApiCICDBuildRecordService `json:"services"`
-	Tag         string                      `json:"tag"`
-	BuildUser   string                      `json:"build_user"`
-	Name        string                      `json:"name"`
+	Describe    string                  `json:"describe"`
+	Env         string                  `json:"env"`
+	ProjectName string                  `json:"project_name"`
+	Services    []ApiBuildRecordService `json:"services"`
+	Tag         string                  `json:"tag"`
+	BuildUser   string                  `json:"build_user"`
+	Name        string                  `json:"name"`
 }
 
-type ApiCICDBuildRecordService struct {
+type ApiBuildRecordService struct {
 	ServiceName string `json:"service_name"`
 	Branch      string `json:"branch"`
 }
