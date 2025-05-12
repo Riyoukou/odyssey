@@ -82,8 +82,9 @@ CREATE TABLE `cicd_tools` (
   `description` text COMMENT '工具描述',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='CICD 工具信息表';
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='CICD 工具信息表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -105,7 +106,7 @@ CREATE TABLE `clusters` (
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Kubernetes 集群信息表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Kubernetes 集群信息表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -123,10 +124,12 @@ CREATE TABLE `code_libraries` (
   `project_name` varchar(255) NOT NULL COMMENT '代码库所属项目',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间',
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '记录最后更新时间',
+  `type` varchar(255) NOT NULL COMMENT '代码库类型',
+  `project_id` bigint NOT NULL COMMENT '代码库id',
   PRIMARY KEY (`id`),
   KEY `codelibrary` (`name`),
   KEY `project` (`project_name`)
-) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='代码库表，存储代码库的相关信息';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='代码库表，存储代码库的相关信息';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -146,7 +149,7 @@ CREATE TABLE `credentials` (
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '记录最后更新时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uniq_name_type` (`name`,`type`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='统一凭证存储表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='统一凭证存储表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -221,7 +224,7 @@ CREATE TABLE `envs` (
   UNIQUE KEY `name` (`name`,`project_name`) COMMENT '唯一索引：环境名称和项目名称组合，确保环境名称在项目中的唯一性',
   KEY `project_name` (`project_name`) COMMENT '索引：项目名称，用于快速查找环境信息',
   CONSTRAINT `envs_ibfk_1` FOREIGN KEY (`project_name`) REFERENCES `projects` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='环境表，存储与环境相关的信息，包括环境名称、类型、所属项目和命名空间';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='环境表，存储与环境相关的信息，包括环境名称、类型、所属项目和命名空间';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -234,13 +237,11 @@ DROP TABLE IF EXISTS `projects`;
 CREATE TABLE `projects` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键：服务记录唯一标识，自增',
   `name` varchar(255) NOT NULL COMMENT '服务名称',
-  `env` json DEFAULT NULL COMMENT '服务的环境配置信息，以 JSON 格式存储',
-  `clusters` json DEFAULT NULL COMMENT '服务所属的集群信息，以 JSON 格式存储',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`) COMMENT '唯一索引：服务名称，确保服务名称唯一'
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='服务表，存储与服务相关的信息，包括名称、环境配置和集群信息';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='服务表，存储与服务相关的信息，包括名称、环境配置和集群信息';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -254,16 +255,17 @@ CREATE TABLE `services` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键：服务记录唯一标识，自增',
   `name` varchar(255) NOT NULL COMMENT '服务名称',
   `project_name` varchar(255) NOT NULL COMMENT '服务所属项目名称',
-  `env_name` varchar(255) NOT NULL COMMENT '服务部署环境名称',
   `code_library_name` varchar(255) NOT NULL COMMENT '代码库名称',
-  `deploy_map` json DEFAULT NULL COMMENT '服务的部署映射，存储服务相关的部署信息',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间',
+  `cicd_map` json DEFAULT NULL,
+  `clusters` json NOT NULL,
+  `env_name` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `project_name_2` (`project_name`,`name`,`env_name`),
+  UNIQUE KEY `project_name_2` (`project_name`,`name`),
   KEY `project_name` (`project_name`) COMMENT '索引：项目名称，用于加速查询',
   CONSTRAINT `services_ibfk_1` FOREIGN KEY (`project_name`) REFERENCES `projects` (`name`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='服务表，存储与服务相关的信息，包括名称、环境配置和集群信息';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='服务表，存储与服务相关的信息，包括名称、环境配置和集群信息';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -287,7 +289,7 @@ CREATE TABLE `users` (
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户表，存储系统用户的相关信息';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户表，存储系统用户的相关信息';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -297,6 +299,7 @@ CREATE TABLE `users` (
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES (1,'admin','admin@odyssey.cn','00000000000','','YWRtaW46aTdUSUNBaUw=','$2a$10$6zsDHgyUq2/098MNsiwMw.dlVYMeWUMjyZGgCxOnfNpJ28ANDgZsC','local','admin',''),(2,'user','user@odyssey.cn','00000000000','','dXNlcjpaUlB1dm9CbQ==','$2a$10$6zsDHgyUq2/098MNsiwMw.dlVYMeWUMjyZGgCxOnfNpJ28ANDgZsC','local','user','');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
+
 
 --
 -- Dumping routines for database 'odyssey'
@@ -311,4 +314,4 @@ INSERT INTO `users` VALUES (1,'admin','admin@odyssey.cn','00000000000','','YWRta
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-04-30 14:59:24
+-- Dump completed on 2025-05-12 20:47:42
