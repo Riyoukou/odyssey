@@ -6,11 +6,9 @@ import (
 	"gorm.io/datatypes"
 )
 
-// ServiceCICDForm
-
-type ServiceCICDForm struct {
+// ServiceDeployMap
+type ServiceDeployMap struct {
 	Yaml    YamlSection    `json:"yaml"`
-	Build   BuildSection   `json:"build"`
 	Release ReleaseSection `json:"release"`
 }
 
@@ -22,19 +20,19 @@ type YamlSection struct {
 	Content    string `json:"content"`
 }
 
-type BuildSection struct {
-	Type     string        `json:"type"`
-	CICDTool string        `json:"cicd_tool"`
-	JobURL   string        `json:"job_url"`
-	JobParam []interface{} `json:"job_param"` // 可根据实际结构替换为具体类型
-}
-
 type ReleaseSection struct {
 	DeployType        string `json:"deployType"`
 	Workload          string `json:"workload"`
 	Type              string `json:"type"`
 	CICDTool          string `json:"cicd_tool"`
 	ArgoCDApplication string `json:"argocd_application"`
+}
+
+type ServiceBuildMap struct {
+	Type     string        `json:"type"`
+	CICDTool string        `json:"cicd_tool"`
+	JobURL   string        `json:"job_url"`
+	JobParam []interface{} `json:"job_param"` // 可根据实际结构替换为具体类型
 }
 
 // repository_model
@@ -85,7 +83,8 @@ type ServiceTable struct {
 	ProjectName     string         `json:"project_name"`
 	CodeLibraryName string         `json:"code_library_name"`
 	Clusters        datatypes.JSON `json:"clusters"`
-	CICDMap         datatypes.JSON `json:"cicd_map"`
+	BuildMap        datatypes.JSON `json:"build_map"`
+	DeployMap       datatypes.JSON `json:"deploy_map"`
 	EnvName         string         `json:"env_name"`
 	CreatedAt       time.Time      `json:"created_at"`
 	UpdatedAt       time.Time      `json:"updated_at"`

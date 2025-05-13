@@ -11,14 +11,15 @@ import (
 	"github.com/Riyoukou/odyssey/app/repository"
 	"github.com/Riyoukou/odyssey/app/service"
 	"github.com/Riyoukou/odyssey/app/utils"
+	"github.com/Riyoukou/odyssey/pkg/logger"
 	"github.com/Riyoukou/odyssey/pkg/response"
 	"github.com/gin-gonic/gin"
 )
 
 func HandleServiceCICDMap(c *gin.Context) {
 	var (
-		updateData model.ServiceCICDForm
-		cicdMap    map[string][]model.ServiceCICDForm
+		updateData model.ServiceDeployMap
+		deployMap  map[string][]model.ServiceDeployMap
 	)
 	intID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
@@ -36,12 +37,12 @@ func HandleServiceCICDMap(c *gin.Context) {
 		return
 	}
 
-	err = json.Unmarshal(result.CICDMap, &cicdMap)
+	err = json.Unmarshal(result.DeployMap, &deployMap)
 	if err != nil {
 		return
 	}
 
-	result.CICDMap = service.ServiceCICDMap(cicdMap, c.Query("action"), strings.Split(c.Query("clusters"), ","), updateData)
+	result.DeployMap = service.ServiceCICDMap(deployMap, c.Query("action"), strings.Split(c.Query("clusters"), ","), updateData)
 
 	err = repository.UpdateServiceByNameAndProjectByEnv(result)
 	if err != nil {
@@ -50,6 +51,40 @@ func HandleServiceCICDMap(c *gin.Context) {
 	}
 
 	response.Success(c, nil, "OK")
+
+}
+
+func HandleCICDBuildByJenkins(c *gin.Context) {
+	id := c.Param("id")
+	buildRecordID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		logger.Errorf("解析构建记录 ID 失败: %v", err)
+	}
+	buildRecord, err := repository.GetBuildRecordByID(buildRecordID)
+	if err != nil {
+		logger.Errorf("获取构建记录失败: %v", err)
+	}
+
+	if buildRecord.Status != "Pending" {
+		response.Success(c, http.StatusBadRequest, "ERROR STATUS")
+		return
+	}
+
+	buildRecord.Status = "Building" // 更新数据库
+	err = repository.UpdateBuildRecordsByID(buildRecordID, *buildRecord)
+	if err != nil {
+		logger.Errorf("更新构建记录失败: %v", err)
+	}
+
+	go func() {
+		_, err := service.CICDBuildByJenkins(*buildRecord)
+		if err != nil {
+			logger.Errorf("构建失败: %v", err)
+			return
+		}
+	}()
+
+	response.Success(c, nil, "BUILD BY JENKINS SUCCESS")
 
 }
 
@@ -91,6 +126,8 @@ func HandleCICDFetch(c *gin.Context) {
 		cicdTool, _ := repository.GetCICDToolByName(codeLibrary.CodeSourceName)
 		credential, _ := repository.GetCredentialByName(cicdTool.CredentialName)
 		result = utils.GitGetTags(codeLibrary.URL, credential.Data)
+	case "build_service_record":
+		result, err = repository.GetBuildServiceRecordsByBuildRecordName(c.Query("build_record"))
 	}
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err)
@@ -186,13 +223,18 @@ func HandleCICDCreate(c *gin.Context) {
 			break
 		}
 		_ = json.Unmarshal(req.Clusters, &clusters)
-		cicdMap := service.ServiceCICDMap(
-			map[string][]model.ServiceCICDForm{}, "create",
+		deployMap := service.ServiceCICDMap(
+			map[string][]model.ServiceDeployMap{}, "create",
 			clusters,
-			model.ServiceCICDForm{},
+			model.ServiceDeployMap{},
 		)
 
-		req.CICDMap = cicdMap
+		jsonBuildMap, err := json.MarshalIndent(model.ServiceBuildMap{}, "", "  ")
+		if err != nil {
+			break
+		}
+		req.BuildMap = jsonBuildMap
+		req.DeployMap = deployMap
 
 		err = repository.CreateService(req)
 		if err != nil {
@@ -222,6 +264,12 @@ func HandleCICDCreate(c *gin.Context) {
 			break
 		}
 		err = service.CreateBuildRecord(req)
+	case "build_service_record":
+		var req model.BuildServiceRecordTable
+		if err = c.ShouldBind(&req); err != nil {
+			break
+		}
+		err = repository.CreateBuildServiceRecord(req)
 	}
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err)
@@ -257,12 +305,33 @@ func HandleCICDUpdate(c *gin.Context) {
 			break
 		}
 		err = repository.UpdateServiceByNameAndProjectByEnv(req)
+	case "service_build_map":
+		intID, err := strconv.ParseInt(c.Query("id"), 10, 64)
+		if err != nil {
+			response.Error(c, http.StatusBadRequest, err)
+			return
+		}
+
+		var req model.ServiceBuildMap
+		if err = c.ShouldBind(&req); err != nil {
+			break
+		}
+		jsonStr, err := json.Marshal(req)
+		if err != nil {
+			break
+		}
+		err = repository.UpdateServiceBuildMap(intID, jsonStr)
+		if err != nil {
+			response.Error(c, http.StatusBadRequest, err)
+			return
+		}
 	case "code_library":
 		var req model.CodeLibraryTable
 		if err = c.ShouldBind(&req); err != nil {
 			break
 		}
 		err = repository.UpdateCodeLibraryByNameAndProject(req)
+
 	case "cicd_tool":
 		var req model.CICDToolTable
 		if err = c.ShouldBind(&req); err != nil {

@@ -42,6 +42,8 @@
       <el-table-column prop="created_at" label="创建时间" sortable/> 
       <el-table-column label="操作" fixed="right" width="120">
         <template #default="{ row }">
+          <el-button link type="primary" @click="editForm.toDetail(row)">详情</el-button>
+          <el-divider direction="vertical" />
           <el-button link type="primary" @click="table.delete(row)">删除</el-button>
         </template>
       </el-table-column>
@@ -58,6 +60,34 @@
         <newBuildRecordIndex
           :activeProject = table.activeProject
         />
+      </template>
+      <template #footer>
+        <div style="flex: auto">
+          <el-button @click="editForm.show = false">关闭</el-button>
+        </div>
+      </template>
+    </el-drawer>
+    <el-drawer
+      v-model="editForm.detailShow" 
+      direction="rtl"
+      size="40%"
+    >
+      <template #header>
+        <h4>构建详情</h4>
+      </template>
+      <template #default>
+        <el-table
+          :data="table.buildServiceRecordData"
+          row-key="id"
+          table-layout="auto"
+          max-height="900"
+        >
+          <el-table-column prop="service_name" label="服务名称" />
+          <el-table-column prop="branch" label="构建分支" />
+          <el-table-column prop="image" label="构建镜像" />
+          <el-table-column prop="build_url" label="构建地址" />、
+          <el-table-column prop="status" label="状态" />
+        </el-table>
       </template>
       <template #footer>
         <div style="flex: auto">
@@ -106,6 +136,7 @@ const rules = computed(() => {
 const editForm = reactive({
   ref: null as FormInstance | null,
   show: false,
+  detailShow: false,
   title: '',
   state: '',
   model: {
@@ -131,6 +162,10 @@ const editForm = reactive({
     }
     table.fetchProject()
   },
+  toDetail: (row: any) => {
+    editForm.detailShow = true
+    table.fetchBuildServiceRecord(row)
+  },
   submit: () => {
     editForm.ref?.validate().then(() => {
       editForm.show = false
@@ -144,6 +179,7 @@ const table = reactive({
   border: true,
   activeProject: '请选择项目名称',
   data: [] as any[],
+  buildServiceRecordData: [] as any[],
   filteredData: [] as any[],
   projectData: [] as any[],
   request: () => {
@@ -155,6 +191,13 @@ const table = reactive({
           table.loading = false
       })
     }
+  },
+  fetchBuildServiceRecord: (form: any) => {
+    table.loading = true
+    http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/build_service_record?build_record=${form.name}`).then((res: any) => {
+      table.buildServiceRecordData = res.data
+      table.loading = false
+    })
   },
   fetchProject: () => {
     table.loading = true

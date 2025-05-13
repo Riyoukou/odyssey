@@ -63,7 +63,7 @@
     <!-- 构建 + 发布 并排 -->
     <div class="flex gap-6">
       <!-- 构建配置 -->
-      <ElCard shadow="never" class="w-1/2">
+      <!--<ElCard shadow="never" class="w-1/2">
         <template #header>
           <h2 class="text-lg font-semibold">构建配置</h2>
         </template>
@@ -119,7 +119,7 @@
             </ElFormItem>
           </template>
         </ElForm>
-      </ElCard>
+      </ElCard>-->
 
       <!-- 发布配置 -->
       <ElCard shadow="never" class="w-1/2">
@@ -198,26 +198,19 @@ const props = defineProps({
   activeCluster: {
     type: String,
   },
-  activeCICDMap: {
+  activeDeployMap: {
     type: Array as PropType<any[]>,
   }
 })
 
 const editForm = reactive({
-  model: props.activeCICDMap?.[0] ||{
+  model: props.activeDeployMap?.[0] ||{
     yaml: {
       isGitOps: false,
       gitopsrepo: '',
       gitopsType: '',
       filePath: '',
       content: '',
-    },
-    build: {
-      param: [{ key: '' }],
-      type: '',
-      cicd_tool: '',
-      job_url: '',
-      job_param: [],
     },
     release: {
       deployType: '',
@@ -229,19 +222,9 @@ const editForm = reactive({
   }
 });
 
-const addBuildVar = () => {
-  // Ensure 'param' is always an array
-  if (Array.isArray(editForm.model.build.param)) {
-    editForm.model.build.param.push({ key: '' });
-  } else {
-    editForm.model.build.param = [{ key: '' }]; // Initialize if not an array
-  }
-};
-const removeBuildVar = (i: number) => editForm.model.build.param.splice(i, 1);
-
 const submitData = () => {
   console.log(editForm.model)
-  service.submitCICDMap()
+  service.submitDeployMap()
 }
 
 const yamlError = ref('');
@@ -278,7 +261,7 @@ const service = reactive({
       service.loading = false
     })
   },
-  submitCICDMap: () => {
+  submitDeployMap: () => {
     service.loading = true
     http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/service/cicd_map/${props.activeID}?action=update&clusters=${props.activeCluster}`, editForm.model).then((res: any) => {
       service.loading = false

@@ -83,29 +83,43 @@
         </ElFormItem>
       </ElForm>
       <template #footer>
-        <ElButton v-if="editForm.state === 'edit'" type="primary" @click="editForm.toCICDMap">发布信息</ElButton>
+        <ElButton v-if="editForm.state === 'edit'" type="primary" @click="editForm.toBuildMap">构建信息</ElButton>
+        <ElButton v-if="editForm.state === 'edit'" type="primary" @click="editForm.toDeployMap">发布信息</ElButton>
         <ElButton v-if="editForm.state === 'add'" type="primary" @click="editForm.submit">提交</ElButton>
         <ElButton v-else-if="editForm.state === 'edit'" type="primary" @click="editForm.editSubmit">提交</ElButton>
       </template>
     </ElDialog>
-    <el-drawer v-model="editForm.cicdMapShow" direction="btt" size="100%">
+    <el-drawer v-model="editForm.buildMapShow" direction="btt" size="70%">
       <template #header>
-      <h4>CICD信息</h4>
-    </template>
-    <template #default>
-      <el-tabs v-model="editForm.activeTab" class="demo-tabs" @tab-click="editForm.tabClick">
-        <el-tab-pane v-for="item in editForm.model.clusters" :key="item" :label="item" :name="item">      
-          <cicdMap 
-            :activeCluster = editForm.activeTab
-            :activeCICDMap = editForm.model.cicd_map[item]
-            :activeID = editForm.activeID
-          />
-        </el-tab-pane>
-      </el-tabs>
-    </template>
-    <template #footer>
-    </template>
-  </el-drawer>
+        <h4>CI信息</h4>
+      </template>
+      <template #default>   
+        <buildMap 
+          :activeBuildMap = editForm.model.build_map
+          :activeID = editForm.activeID
+        />
+      </template>
+      <template #footer>
+      </template>
+    </el-drawer>
+    <el-drawer v-model="editForm.deployMapShow" direction="btt" size="100%">
+      <template #header>
+        <h4>CD信息</h4>
+      </template>
+      <template #default>
+        <el-tabs v-model="editForm.activeTab" class="demo-tabs" @tab-click="editForm.tabClick">
+          <el-tab-pane v-for="item in editForm.model.clusters" :key="item" :label="item" :name="item">      
+            <deployMap 
+              :activeCluster = editForm.activeTab
+              :activeDeployMap = editForm.model.deploy_map[item]
+              :activeID = editForm.activeID
+            />
+          </el-tab-pane>
+        </el-tabs>
+      </template>
+      <template #footer>
+      </template>
+    </el-drawer>
   </div>
 </template>
 
@@ -113,7 +127,8 @@
 import { ref, reactive, computed } from 'vue'
 import { ElMessage, type FormInstance } from 'element-plus'
 import http from '@/api'
-import cicdMap from '@/views/cicd/serviceTable/cicdMap.vue'
+import deployMap from '@/views/cicd/serviceTable/deployMap.vue'
+import buildMap from '@/views/cicd/serviceTable/buildMap.vue'
 
 // 搜索表单配置
 const searchRef = ref<FormInstance | null>(null);
@@ -148,7 +163,8 @@ const rules = computed(() => {
 const editForm = reactive({
   ref: null as FormInstance | null,
   show: false,
-  cicdMapShow: false,
+  buildMapShow: false,
+  deployMapShow: false,
   title: '',
   state: '',
   activeTab: '',
@@ -159,7 +175,8 @@ const editForm = reactive({
     clusters: [] as string[],
     env_name: '',
     code_library_name: '',
-    cicd_map: {} as Record<string, any[]>,
+    build_map: {} as Record<string, any>,
+    deploy_map: {} as Record<string, any[]>,
   },
   toAdd: () => {
     editForm.ref?.resetFields()
@@ -172,13 +189,17 @@ const editForm = reactive({
       code_library_name: '',
       clusters: [],
       env_name: table.activeEnv,
-      cicd_map: {} as Record<string, any[]>,
+      build_map: {} as Record<string, any>,
+      deploy_map: {} as Record<string, any[]>,
     }
     table.fetchCluster()
     table.fetchCodeLibrary()
   },
-  toCICDMap: () => {
-    editForm.cicdMapShow = true
+  toBuildMap: () => {
+    editForm.buildMapShow = true
+  },
+  toDeployMap: () => {
+    editForm.deployMapShow = true
     editForm.activeTab = editForm.model.clusters[0]
   },
   toView: (row: any) => {

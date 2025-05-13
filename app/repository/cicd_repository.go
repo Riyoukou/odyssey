@@ -242,6 +242,15 @@ func UpdateServiceByNameAndProjectByEnv(service model.ServiceTable) error {
 	return nil
 }
 
+func UpdateServiceBuildMap(id int64, buildMap []byte) error {
+	if err := DB.Model(&model.ServiceTable{}).Where("id = ?", id).Update("build_map", buildMap).Error; err != nil {
+		logger.Errorf("Failed to update service build map: %v", err)
+		return err
+	}
+
+	return nil
+}
+
 // code_library
 func FetchCodeLibraries() ([]model.CodeLibraryTable, error) {
 	var codeLibraries []model.CodeLibraryTable
@@ -321,6 +330,14 @@ func GetBuildRecordByID(id int64) (*model.BuildRecordTable, error) {
 	return &record, nil
 }
 
+func UpdateBuildRecordsByID(id int64, buildRecord model.BuildRecordTable) error {
+	if err := DB.Model(&model.BuildRecordTable{}).Where("id = ?", id).Updates(buildRecord).Error; err != nil {
+		return fmt.Errorf("failed to update build record: %w", err)
+	}
+
+	return nil
+}
+
 func GetBuildRecordByName(name string) (*model.BuildRecordTable, error) {
 	var record model.BuildRecordTable
 	if err := DB.Where("name = ?", name).First(&record).Error; err != nil {
@@ -367,6 +384,14 @@ func UpdateBuildServiceRecord(buildServiceRecord model.BuildServiceRecordTable) 
 	if err := DB.Model(&model.BuildServiceRecordTable{}).Where("id = ?", buildServiceRecord.ID).Updates(buildServiceRecord).Error; err != nil {
 		return fmt.Errorf("failed to update build service record: %w", err)
 	}
+	return nil
+}
+
+func UpdateBuildServiceRecordsByID(id int64, buildServiceRecord model.BuildServiceRecordTable) error {
+	if err := DB.Model(&model.BuildServiceRecordTable{}).Where("id = ?", id).Updates(buildServiceRecord).Error; err != nil {
+		return fmt.Errorf("failed to update build service record: %w", err)
+	}
+
 	return nil
 }
 
