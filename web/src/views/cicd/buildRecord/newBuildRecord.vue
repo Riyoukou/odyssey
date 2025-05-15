@@ -289,7 +289,7 @@ const service = reactive({
       service.data = res.data
       editForm.clear();
       window.location.reload();
-      ElMessage.success('创建成功')
+      ElMessage.success(res.message)
     })
   },
   fetchService: () => {

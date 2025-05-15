@@ -31,7 +31,12 @@
     </div>
 
     <!-- 列表 -->
-    <el-table :data="table.filteredData" style="width: 100%" @selection-change="handleSelectionChange">
+    <el-table 
+      :data="table.filteredData" 
+      style="width: 100%" 
+      @selection-change="handleSelectionChange"
+      :default-sort="{ prop: 'created_at', order: 'descending' }"
+    >
       <el-table-column type="selection" width="55" />
       <el-table-column prop="name" label="名称" sortable/>
       <el-table-column prop="status" label="状态" sortable/>
@@ -40,8 +45,10 @@
       <el-table-column prop="tag" label="标签" sortable/>
       <el-table-column prop="build_user" label="提交用户" sortable/>
       <el-table-column prop="created_at" label="创建时间" sortable/> 
-      <el-table-column label="操作" fixed="right" width="120">
+      <el-table-column label="操作" fixed="right" width="200">
         <template #default="{ row }">
+          <el-button link type="primary" @click="table.build(row)">构建</el-button>
+          <el-divider direction="vertical" />
           <el-button link type="primary" @click="editForm.toDetail(row)">详情</el-button>
           <el-divider direction="vertical" />
           <el-button link type="primary" @click="table.delete(row)">删除</el-button>
@@ -212,7 +219,7 @@ const table = reactive({
       table.loading = false
       editForm.show = false
       table.request()
-      ElMessage.success('新增成功')
+      ElMessage.success(res.message)
     })
   },
   delete: (form: any) => {
@@ -220,7 +227,15 @@ const table = reactive({
     http.delete(import.meta.env.VITE_APP_BASE_URL + `/cicd/delete/build_record/${form.id}`).then((res: any) => {
       table.loading = false
       table.request()
-      ElMessage.success('删除成功')
+      ElMessage.success(res.message)
+    })
+  },
+  build: (form: any) => {
+    table.loading = true
+    http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/build/${form.id}`).then((res: any) => {
+      table.loading = false
+      table.request()
+      ElMessage.success(res.message)
     })
   },
   selectProject: (project_name: string) => {

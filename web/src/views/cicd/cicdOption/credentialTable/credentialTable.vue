@@ -196,7 +196,7 @@ const table = reactive({
     http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/create/credential`, form).then((res: any) => {
       table.loading = false
       table.request()
-      ElMessage.success('创建成功')
+      ElMessage.success(res.message)
     })
   },
   delete: (form: any) => {
@@ -204,7 +204,7 @@ const table = reactive({
     http.delete(import.meta.env.VITE_APP_BASE_URL + `/cicd/delete/credential/${form.id}`).then((res: any) => {
       table.loading = false
       table.request()
-      ElMessage.success('删除成功')
+      ElMessage.success(res.message)
     })
   }
 })

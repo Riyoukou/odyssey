@@ -218,7 +218,7 @@ const table = reactive({
     table.loading = true
     http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/create/cicd_tool`, form).then((res: any) => {
       table.loading = false
-      ElMessage.success('新增成功')
+      ElMessage.success(res.message)
       table.request()
     })
   },
@@ -226,7 +226,7 @@ const table = reactive({
     table.loading = true
     http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/update/cicd_tool`, form).then((res: any) => {
       table.loading = false
-      ElMessage.success('编辑成功')
+      ElMessage.success(res.message)
     })
   },
   delete: (form: any) => {
@@ -234,7 +234,7 @@ const table = reactive({
     http.delete(import.meta.env.VITE_APP_BASE_URL + `/cicd/delete/cicd_tool/${form.id}`).then((res: any) => {
       table.loading = false
       table.request()
-      ElMessage.success('删除成功')
+      ElMessage.success(res.message)
     })
   },
   selectConfig: () => {
