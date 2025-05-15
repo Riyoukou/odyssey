@@ -1,4 +1,7 @@
 # odyssey
+
+tips:当前主包实力有限，只能整合cicd工具使用，当前功能实现依赖:Argocd,Jenkins,Git这三个传统工具，还不能脱离传统工具流，后续会逐步完善
+
 GO + VUE3编写的运维平台
 
 后端:使用GOGIN框架
