@@ -172,13 +172,7 @@ const editForm = reactive({
   toDetail: (row: any) => {
     editForm.detailShow = true
     table.fetchBuildServiceRecord(row)
-  },
-  submit: () => {
-    editForm.ref?.validate().then(() => {
-      editForm.show = false
-      table.create(editForm.model)
-    })
-  },
+  }
 })
 // 表格配置
 const table = reactive({
@@ -211,15 +205,6 @@ const table = reactive({
     http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/project`).then((res: any) => {
       table.projectData = res.data
       table.loading = false
-    })
-  },
-  create: (form: any) => {
-    table.loading = true
-    http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/create/env`, form).then((res: any) => {
-      table.loading = false
-      editForm.show = false
-      table.request()
-      ElMessage.success(res.message)
     })
   },
   delete: (form: any) => {

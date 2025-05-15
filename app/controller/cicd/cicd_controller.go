@@ -128,6 +128,8 @@ func HandleCICDFetch(c *gin.Context) {
 		result = utils.GitGetTags(codeLibrary.URL, credential.Data)
 	case "build_service_record":
 		result, err = repository.GetBuildServiceRecordsByBuildRecordName(c.Query("build_record"))
+	case "deploy_service_record":
+		result, err = repository.GetDeployServiceRecordsByDeployRecordName(c.Query("deploy_record"))
 	}
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err)
@@ -270,6 +272,12 @@ func HandleCICDCreate(c *gin.Context) {
 			break
 		}
 		err = repository.CreateBuildServiceRecord(req)
+	case "deploy_record":
+		var req model.DeployServiceRecordTable
+		if err = c.ShouldBind(&req); err != nil {
+			break
+		}
+		err = repository.CreateDeployServiceRecord(req)
 	}
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err)
