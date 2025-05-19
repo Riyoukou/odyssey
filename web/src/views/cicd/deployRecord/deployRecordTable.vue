@@ -43,7 +43,8 @@
       <el-table-column prop="project_name" label="项目" sortable/>
       <el-table-column prop="env" label="环境" sortable/>
       <el-table-column prop="tag" label="标签" sortable/>
-      <el-table-column prop="build_user" label="提交用户" sortable/>
+      <el-table-column prop="cluster_names" label="发布集群" sortable/>
+      <el-table-column prop="deploy_user" label="提交用户" sortable/>
       <el-table-column prop="created_at" label="创建时间" sortable/> 
       <el-table-column label="操作" fixed="right" width="200">
         <template #default="{ row }">
@@ -152,7 +153,7 @@ const editForm = reactive({
     env: '',
     tag: '',
     description: '',
-    build_user: '',
+    deploy_user: '',
   },
   toAdd: () => {
     editForm.ref?.resetFields()
@@ -165,7 +166,7 @@ const editForm = reactive({
       env: '',
       tag: '',
       description: '',
-      build_user: '',
+      deploy_user: '',
     }
     table.fetchProject()
   },
