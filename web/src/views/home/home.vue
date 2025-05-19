@@ -4,7 +4,7 @@
     <h2>
       GitHub: 
       <a href="https://github.com/hozi/odyssey" target="_blank">
-        https://github.com/hozi/odyssey
+        https://github.com/riyoukou/odyssey
       </a>
     </h2>
   </div>
