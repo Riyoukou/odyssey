@@ -412,6 +412,14 @@ func CreateDeployRecord(deployRecord model.DeployRecordTable) error {
 	return nil
 }
 
+func DeteleDeployRecord(id int64) error {
+	if err := DB.Delete(&model.DeployRecordTable{}, id).Error; err != nil {
+		return fmt.Errorf("failed to delete deploy record: %w", err)
+	}
+
+	return nil
+}
+
 func GetDeployRecordByID(id int64) (*model.DeployRecordTable, error) {
 	var record model.DeployRecordTable
 	if err := DB.Where("id = ?", id).First(&record).Error; err != nil {

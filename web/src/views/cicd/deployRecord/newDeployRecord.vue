@@ -24,9 +24,8 @@
         label="发布集群"
         :rules="[ { required: true, message: '发布集群不能为空', trigger: 'blur' } ]"
       >
-        <el-select v-model="editForm.model.cluster_names" placeholder="选择集群" @change="" multiple>
-          <el-option label="ctyun-huabei2-ccse01" value="ctyun-huabei2-ccse01" />
-          <el-option label="ctyun-huabei2-ccse02" value="ctyun-huabei2-ccse02" />
+        <el-select v-model="selectClusters" placeholder="选择集群" @focus="service.fetchClusters()" multiple>
+          <ElOption  v-for="item in service.clusterData" :key="item.name" :label="item.name" :value="item.name" />
         </el-select>
       </el-form-item>
       <div style="margin: 50px 0" />
@@ -35,7 +34,7 @@
       </el-form-item>
     </el-form>
     <el-footer>
-      <div class="button-container" style="position: fixed; bottom: 100px; right: 100px;">
+      <div class="button-container" style="position: fixed; bottom: 100px; right: 100px;" @click="service.createDeployRecord()">
         <el-button type="primary">提交</el-button>
       </div>
     </el-footer>
@@ -43,12 +42,13 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive } from 'vue';
+import { reactive, ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import useUserStore from '@/stores/useUserStore'
 import http from '@/api'
 
 const userStore = useUserStore()
+const selectClusters = ref<string[]>([])
 
 const props = defineProps<{
   buildRecordRow: any
@@ -58,6 +58,7 @@ const editForm = reactive({
   ref: null as any,
   show: false,
   detailShow: false,
+
   title: '',
   state: '',
   model: {
@@ -66,8 +67,9 @@ const editForm = reactive({
     project_name: props.buildRecordRow.project_name,
     build_record_name: props.buildRecordRow.name,
     tag: props.buildRecordRow.tag,
+    status: "Pending",
     deploy_user: userStore.userInfo.name,
-    cluster_names:[],
+    cluster_names: "",
     description: '',
   },
   clear: () => {
@@ -76,7 +78,7 @@ const editForm = reactive({
     editForm.model.project_name = '';
     editForm.model.build_record_name = '';
     editForm.model.tag = '';
-    editForm.model.cluster_names = [];
+    editForm.model.cluster_names = "";
     editForm.model.description = '';
   }
 });
@@ -85,15 +87,24 @@ const editForm = reactive({
 const service = reactive({
   loading: false,
   data: [] as any[],
-  fetchData: () => {
-  service.loading = true
-  http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/create/build_record`, editForm.model).then((res: any) => {
-    service.loading = false
-    service.data = res.data
-    editForm.clear();
-    window.location.reload();
-    ElMessage.success(res.message)
-  })
+  clusterData: [] as any[],
+  createDeployRecord: () => {
+    service.loading = true
+    editForm.model.cluster_names= selectClusters.value.join(",")
+    http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/create/deploy_record`, editForm.model).then((res: any) => {
+      service.loading = false
+      service.data = res.data
+      editForm.clear();
+      //window.location.reload();
+      ElMessage.success(res.message)
+    })
   },
+  fetchClusters: () => {
+    service.loading = true
+    http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/cluster`).then((res: any) => {
+      service.clusterData = res.data
+      service.loading = false
+    })
+  }
 })
 </script>

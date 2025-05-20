@@ -273,11 +273,11 @@ func HandleCICDCreate(c *gin.Context) {
 		}
 		err = repository.CreateBuildServiceRecord(req)
 	case "deploy_record":
-		var req model.DeployServiceRecordTable
+		var req model.DeployRecordTable
 		if err = c.ShouldBind(&req); err != nil {
 			break
 		}
-		err = repository.CreateDeployServiceRecord(req)
+		err = service.CreateDeployRecord(req)
 	}
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err)
@@ -379,6 +379,8 @@ func HandleCICDDelete(c *gin.Context) {
 		err = repository.DeleteCICDTool(intID)
 	case "build_record":
 		err = repository.DeleteBuildRecord(intID)
+	case "deploy_record":
+		err = repository.DeteleDeployRecord(intID)
 	}
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err)

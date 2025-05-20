@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -86,6 +87,40 @@ func CreateBuildRecord(apiBuildRecord model.ApiBuildRecord) error {
 		}
 	}
 
+	return nil
+}
+
+func CreateDeployRecord(deployRecord model.DeployRecordTable) error {
+	deployRecord.Status = "Pending"
+	err := repository.CreateDeployRecord(deployRecord)
+	if err != nil {
+		fmt.Printf("CreateDeployRecord error: %v", err)
+		return err
+	}
+
+	buildServiceRecords, err := repository.GetBuildServiceRecordsByBuildRecordName(deployRecord.BuildRecordName)
+	if err != nil {
+		fmt.Printf("GetBuildServiceRecordsByBuildRecordName error: %v", err)
+		return err
+	}
+	for _, cluster := range strings.Split(deployRecord.ClusterNames, ",") {
+		for _, buildServiceRecord := range buildServiceRecords {
+			deployServiceRecord := model.DeployServiceRecordTable{
+				ServiceName:      buildServiceRecord.ServiceName,
+				ProjectName:      deployRecord.ProjectName,
+				Image:            buildServiceRecord.Image,
+				Status:           "Pending",
+				ClusterName:      cluster,
+				Env:              buildServiceRecord.Env,
+				DeployRecordName: deployRecord.Name,
+			}
+			err = repository.CreateDeployServiceRecord(deployServiceRecord)
+			if err != nil {
+				fmt.Printf("CreateDeployServiceRecord error: %v", err)
+				return err
+			}
+		}
+	}
 	return nil
 }
 

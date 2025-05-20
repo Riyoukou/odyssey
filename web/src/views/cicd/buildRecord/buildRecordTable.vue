@@ -51,6 +51,8 @@
           <el-divider direction="vertical" />
           <el-button link type="primary" @click="editForm.toDetail(row)">详情</el-button>
           <el-divider direction="vertical" />
+          <el-button link type="primary" @click="editForm.toCreateDeploy(row)">发布</el-button>
+          <el-divider direction="vertical" />
           <el-button link type="primary" @click="table.delete(row)">删除</el-button>
         </template>
       </el-table-column>
@@ -75,26 +77,34 @@
       </template>
     </el-drawer>
     <el-drawer
-      v-model="editForm.detailShow" 
+      v-model="editForm.show" 
       direction="rtl"
-      size="40%"
     >
       <template #header>
-        <h4>构建详情</h4>
+        <h4>创建构建</h4>
       </template>
       <template #default>
-        <el-table
-          :data="table.buildServiceRecordData"
-          row-key="id"
-          table-layout="auto"
-          max-height="900"
-        >
-          <el-table-column prop="service_name" label="服务名称" />
-          <el-table-column prop="branch" label="构建分支" />
-          <el-table-column prop="image" label="构建镜像" />
-          <el-table-column prop="build_url" label="构建地址" />、
-          <el-table-column prop="status" label="状态" />
-        </el-table>
+        <newBuildRecordIndex
+          :activeProject = table.activeProject
+        />
+      </template>
+      <template #footer>
+        <div style="flex: auto">
+          <el-button @click="editForm.show = false">关闭</el-button>
+        </div>
+      </template>
+    </el-drawer>
+    <el-drawer
+      v-model="editForm.showCreateDeploy" 
+      direction="rtl"
+    >
+      <template #header>
+        <h4>创建发布</h4>
+      </template>
+      <template #default>
+        <newDeployRecordIndex
+          :buildRecordRow = table.activeRow
+        />
       </template>
       <template #footer>
         <div style="flex: auto">
@@ -110,6 +120,7 @@ import { ref, reactive, computed } from 'vue'
 import { ElMessage, type FormInstance } from 'element-plus'
 import http from '@/api'
 import newBuildRecordIndex from '@/views/cicd/buildRecord/newBuildRecord.vue'
+import newDeployRecordIndex from '@/views/cicd/deployRecord/newDeployRecord.vue'
 
 // 搜索表单配置
 const searchRef = ref<FormInstance | null>(null);
@@ -144,6 +155,7 @@ const editForm = reactive({
   ref: null as FormInstance | null,
   show: false,
   detailShow: false,
+  showCreateDeploy: false,
   title: '',
   state: '',
   model: {
@@ -172,6 +184,10 @@ const editForm = reactive({
   toDetail: (row: any) => {
     editForm.detailShow = true
     table.fetchBuildServiceRecord(row)
+  },
+  toCreateDeploy: (row: any) => {
+    table.activeRow = row
+    editForm.showCreateDeploy = true
   }
 })
 // 表格配置
@@ -179,6 +195,7 @@ const table = reactive({
   loading: false,
   border: true,
   activeProject: '请选择项目名称',
+  activeRow: null as any,
   data: [] as any[],
   buildServiceRecordData: [] as any[],
   filteredData: [] as any[],
