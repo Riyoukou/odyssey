@@ -24,19 +24,19 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-func ServiceCICDMap(cicdMap map[string][]model.ServiceDeployMap, action string, clusters []string, updateData model.ServiceDeployMap) []byte {
+func ServiceCICDMap(cicdMap map[string][]model.DeployItem, action string, clusters []string, updateData model.DeployItem) []byte {
 	// 定义空模板
-	empty := model.ServiceDeployMap{}
+	empty := model.DeployItem{}
 
 	switch action {
 	case "create":
 		for _, name := range clusters {
-			cicdMap[name] = []model.ServiceDeployMap{empty}
+			cicdMap[name] = []model.DeployItem{empty}
 		}
 	case "add":
 		for _, name := range clusters {
 			if _, exists := cicdMap[name]; !exists {
-				cicdMap[name] = []model.ServiceDeployMap{empty}
+				cicdMap[name] = []model.DeployItem{empty}
 			}
 		}
 	case "delete":

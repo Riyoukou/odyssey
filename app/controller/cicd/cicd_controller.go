@@ -20,8 +20,8 @@ import (
 
 func HandleServiceCICDMap(c *gin.Context) {
 	var (
-		updateData model.ServiceDeployMap
-		deployMap  map[string][]model.ServiceDeployMap
+		updateData model.DeployItem
+		deployMap  map[string][]model.DeployItem
 	)
 	intID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
@@ -228,9 +228,9 @@ func HandleCICDCreate(c *gin.Context) {
 		}
 		_ = json.Unmarshal(req.Clusters, &clusters)
 		deployMap := service.ServiceCICDMap(
-			map[string][]model.ServiceDeployMap{}, "create",
+			map[string][]model.DeployItem{}, "create",
 			clusters,
-			model.ServiceDeployMap{},
+			model.DeployItem{},
 		)
 
 		jsonBuildMap, err := json.MarshalIndent(model.ServiceBuildMap{}, "", "  ")
