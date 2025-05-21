@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/Riyoukou/odyssey/pkg/logger"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 )
@@ -126,4 +129,119 @@ func GitGetBranches(repoURL, token string) []string {
 	}
 
 	return branches
+}
+
+func GitIsBehind(repo *git.Repository, branch, token string) bool {
+	// 1. Fetch 最新远程引用
+	err := repo.Fetch(&git.FetchOptions{
+		Auth: &githttp.BasicAuth{
+			Username: "odyssey",
+			Password: token,
+		},
+		RemoteName: "origin",
+		RefSpecs:   []config.RefSpec{config.RefSpec("+refs/heads/*:refs/remotes/origin/*")},
+		Force:      true,
+		Progress:   nil,
+		Tags:       git.NoTags,
+	})
+	if err != nil && err != git.NoErrAlreadyUpToDate {
+		logger.Errorf("Failed to fetch remote: %v\n", err)
+		return false
+	}
+
+	// 2. 获取本地 HEAD
+	headRef, err := repo.Head()
+	if err != nil {
+		logger.Errorf("Failed to get HEAD: %v\n", err)
+		return false
+	}
+	localHash := headRef.Hash()
+
+	// 3. 获取远程分支引用
+	remoteRefName := plumbing.NewRemoteReferenceName("origin", branch)
+	remoteRef, err := repo.Reference(remoteRefName, true)
+	if err != nil {
+		logger.Errorf("Failed to get remote ref: %v\n", err)
+		return false
+	}
+	remoteHash := remoteRef.Hash()
+
+	// 4. 比较是否落后
+	if localHash != remoteHash {
+		return true
+	}
+	return false
+}
+
+func GitClone(repoURL, branch, tmpDir, token string) *git.Repository {
+	// Clone repo
+	repo, err := git.PlainClone(tmpDir, false, &git.CloneOptions{
+		URL:           repoURL,
+		ReferenceName: plumbing.NewBranchReferenceName(branch),
+		SingleBranch:  true,
+		Auth: &githttp.BasicAuth{
+			Username: "odyssey",
+			Password: token,
+		},
+	})
+	if err != nil {
+		logger.Errorf("Git clone failed: %v\n", err)
+		return nil
+	}
+	return repo
+}
+
+func GitPull(repo *git.Repository, repoURL, branch, token string, force bool) {
+	// ✅ 获取工作区并执行 pull
+	w, err := repo.Worktree()
+	if err != nil {
+	}
+
+	err = w.Pull(&git.PullOptions{
+		RemoteName: "origin",
+		Auth: &githttp.BasicAuth{
+			Username: "odyssey",
+			Password: token,
+		},
+		Force: force,
+	})
+	// 如果已经是最新，会报 "already up-to-date"
+	if err == git.NoErrAlreadyUpToDate {
+		fmt.Println("✅ Already up-to-date")
+	} else if err != nil {
+		logger.Errorf("Git pull failed: %v\n", err)
+	}
+}
+
+func GitCommit(repo *git.Repository, addPath string) {
+	// Git add + commit
+	worktree, _ := repo.Worktree()
+	_, err := worktree.Add(addPath)
+	if err != nil {
+		logger.Errorf("Failed to add file to git: %v\n", err)
+	}
+	_, err = worktree.Commit("odyssey commit message", &git.CommitOptions{
+		Author: &object.Signature{ // ⬅️ 是 object.Signature，不是 git.Signature
+			Name:  "odyssey",
+			Email: "odyssey@neolix.com",
+			When:  time.Now(),
+		},
+	})
+	if err != nil {
+		logger.Errorf("Git commit failed: %v\n", err)
+	}
+}
+
+func GitPush(repo *git.Repository, repoURL, branch, tmpDir, token string) {
+	// Push
+	err := repo.Push(&git.PushOptions{
+		Auth: &githttp.BasicAuth{
+			Username: "odyssey",
+			Password: token,
+		},
+	})
+	if err != nil {
+		logger.Errorf("Git push failed: %v\n", err)
+	}
+	fmt.Println("✅ Git push success.")
 }

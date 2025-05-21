@@ -6,25 +6,27 @@ import (
 	"gorm.io/datatypes"
 )
 
+type ServiceDeployMap map[string][]DeployItem
+
 // ServiceDeployMap
-type ServiceDeployMap struct {
-	Yaml    YamlSection    `json:"yaml"`
-	Release ReleaseSection `json:"release"`
+type DeployItem struct {
+	Yaml    YamlConfig    `json:"yaml"`
+	Release ReleaseConfig `json:"release"`
 }
 
-type YamlSection struct {
-	IsGitOps   bool   `json:"isGitOps"`
-	GitOpsRepo string `json:"gitopsrepo"`
-	GitOpsType string `json:"gitopsType"`
-	FilePath   string `json:"filePath"`
+type YamlConfig struct {
 	Content    string `json:"content"`
+	FilePath   string `json:"filePath"`
+	IsGitOps   bool   `json:"isGitOps"`
+	GitOpsType string `json:"gitopsType"`
+	GitOpsRepo string `json:"gitopsrepo"`
 }
 
-type ReleaseSection struct {
-	DeployType        string `json:"deployType"`
-	Workload          string `json:"workload"`
+type ReleaseConfig struct {
 	Type              string `json:"type"`
-	CICDTool          string `json:"cicd_tool"`
+	Workload          string `json:"workload"`
+	CicdTool          string `json:"cicd_tool"`
+	DeployType        string `json:"deployType"`
 	ArgoCDApplication string `json:"argocd_application"`
 }
 

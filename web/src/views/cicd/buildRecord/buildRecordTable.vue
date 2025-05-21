@@ -77,16 +77,26 @@
       </template>
     </el-drawer>
     <el-drawer
-      v-model="editForm.show" 
+      v-model="editForm.detailShow" 
       direction="rtl"
+      size="40%"
     >
       <template #header>
-        <h4>创建构建</h4>
+        <h4>发布详情</h4>
       </template>
       <template #default>
-        <newBuildRecordIndex
-          :activeProject = table.activeProject
-        />
+        <el-table
+          row-key="id"
+          :data="table.buildServiceRecordData"
+          table-layout="auto"
+          max-height="900"
+        >
+          <el-table-column prop="service_name" label="服务名称" />
+          <el-table-column prop="branch" label="构建分支" />
+          <el-table-column prop="image" label="构建镜像" />
+          <el-table-column prop="build_url" label="构建地址" />、
+          <el-table-column prop="status" label="状态" />
+        </el-table>
       </template>
       <template #footer>
         <div style="flex: auto">

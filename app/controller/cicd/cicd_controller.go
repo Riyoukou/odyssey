@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/Riyoukou/odyssey/app/model"
 	"github.com/Riyoukou/odyssey/app/repository"
@@ -387,4 +389,168 @@ func HandleCICDDelete(c *gin.Context) {
 		return
 	}
 	response.Success(c, nil, fmt.Sprintf("%s deleted successfully", c.Param("type")))
+}
+
+func HandleStartDeploy(c *gin.Context) {
+	var (
+		wg  sync.WaitGroup
+		mu  sync.Mutex
+		req []model.DeployServiceRecordTable
+	)
+
+	// 绑定请求数据
+	err := c.ShouldBind(&req)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, err)
+		return
+	}
+
+	hasPending := false
+	for _, item := range req {
+		if item.Status == "Pending" {
+			hasPending = true
+			break
+		}
+
+	}
+
+	if hasPending {
+		// 启动并发处理
+		for _, deployServiceRecord := range req {
+			//防止api超时降速
+			time.Sleep(1 * time.Second)
+			if deployServiceRecord.Status != "Pending" {
+				continue
+			}
+			wg.Add(1)
+			go func() {
+				// 同步组减一
+				defer wg.Done()
+				mu.Lock()
+				deployServiceRecord.Status = "Deploying"
+				err = repository.UpdateDeployServiceRecordsByID(deployServiceRecord.ID, deployServiceRecord)
+				if err != nil {
+					logger.Errorf("更新发布服务记录失败: %v", err)
+				}
+				mu.Unlock()
+			}()
+		}
+		response.Success(c, nil, "START DEPLOY SUCCESS")
+		// 执行你的方法
+		service.StartDeployBykustomization(req)
+		service.CICDSyncV2(req)
+	}
+
+	// 启动并发处理
+	for _, deployServiceRecord := range req {
+		//防止api超时降速
+		time.Sleep(1 * time.Second)
+		if deployServiceRecord.Status != "Deploying" {
+			continue
+		}
+		wg.Add(1)
+		go func() {
+			// 同步组减一
+			defer wg.Done()
+			mu.Lock()
+
+			serviceDetail, err := repository.GetServiceByNameAndProjectByEnv(deployServiceRecord.ServiceName, deployServiceRecord.ProjectName, deployServiceRecord.Env)
+			if err != nil {
+				logger.Errorf("获取发布服务详情失败: %v", err)
+			}
+
+			envDetail, err := repository.GetEnvByNameAndProject(deployServiceRecord.Env, deployServiceRecord.ProjectName)
+			if err != nil {
+				logger.Errorf("获取环境详情失败: %v", err)
+			}
+			var deployConfig model.ServiceDeployMap
+
+			err = json.Unmarshal(serviceDetail.DeployMap, &deployConfig)
+			if err != nil {
+				panic(err)
+			}
+
+			status := service.GetWorkloadStatus(deployServiceRecord.ClusterName, deployConfig[deployServiceRecord.ClusterName][0].Release.Workload, envDetail.Namespace, deployServiceRecord.ServiceName)
+
+			deployServiceRecord.Status = status
+
+			mu.Lock()
+			err = repository.UpdateDeployServiceRecordsByID(deployServiceRecord.ID, deployServiceRecord)
+			if err != nil {
+				logger.Errorf("更新发布服务记录失败: %v", err)
+			}
+			mu.Unlock()
+		}()
+	}
+
+}
+
+func HandleApproveDeploy(c *gin.Context) {
+	var (
+		wg  sync.WaitGroup
+		mu  sync.Mutex
+		req []model.DeployServiceRecordTable
+	)
+
+	// 绑定请求数据
+	err := c.ShouldBind(&req)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, err)
+		return
+	}
+
+	response.Success(c, nil, "APPROVE DEPLOY SUCCESS")
+
+	// 启动并发处理
+	for _, deployServiceRecord := range req {
+		if !strings.Contains(deployServiceRecord.Status, "Pending") {
+			continue
+		}
+		//防止api超时降速
+		time.Sleep(1 * time.Second)
+		wg.Add(1)
+		go func() {
+			// 同步组减一
+			defer wg.Done()
+			mu.Lock()
+			deployServiceRecord.Status = "Deploying"
+			err = repository.UpdateDeployServiceRecordsByID(deployServiceRecord.ID, deployServiceRecord)
+			if err != nil {
+				logger.Errorf("更新发布服务记录失败: %v", err)
+			}
+			mu.Unlock()
+
+			serviceDetail, err := repository.GetServiceByNameAndProjectByEnv(deployServiceRecord.ServiceName, deployServiceRecord.ProjectName, deployServiceRecord.Env)
+			if err != nil {
+				logger.Errorf("获取发布服务详情失败: %v", err)
+			}
+
+			var deployConfig model.ServiceDeployMap
+
+			err = json.Unmarshal(serviceDetail.DeployMap, &deployConfig)
+			if err != nil {
+				panic(err)
+			}
+
+			envDetail, err := repository.GetEnvByNameAndProject(deployServiceRecord.Env, deployServiceRecord.ProjectName)
+			if err != nil {
+				logger.Errorf("获取环境详情失败: %v", err)
+			}
+
+			if deployConfig[deployServiceRecord.ClusterName][0].Release.Workload != "StatefulSet" && deployConfig[deployServiceRecord.ClusterName][0].Release.Workload != "DaemonSet" {
+				service.ApproveRolloutKruise(deployServiceRecord.ClusterName, envDetail.Namespace, deployServiceRecord.ServiceName)
+			}
+
+			status := service.GetWorkloadStatus(deployServiceRecord.ClusterName, deployConfig[deployServiceRecord.ClusterName][0].Release.Workload, envDetail.Namespace, deployServiceRecord.ServiceName)
+
+			deployServiceRecord.Status = status
+
+			mu.Lock()
+			err = repository.UpdateDeployServiceRecordsByID(deployServiceRecord.ID, deployServiceRecord)
+			if err != nil {
+				logger.Errorf("更新发布服务记录失败: %v", err)
+			}
+			mu.Unlock()
+		}()
+	}
 }

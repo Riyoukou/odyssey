@@ -304,7 +304,6 @@ const service = reactive({
     if (type === 'branch') {
       http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/gitlab_branch?project=${props.activeProject}&code_library=vehicle-platform`).then((res: any) => {
         service.branchData = res.data
-        console.log(service.branchData)
         editForm.serviceTags[service_name] = service.branchData || [];
         service.loading = false
       })

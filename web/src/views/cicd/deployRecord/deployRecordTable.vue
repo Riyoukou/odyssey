@@ -48,11 +48,7 @@
       <el-table-column prop="created_at" label="创建时间" sortable/> 
       <el-table-column label="操作" fixed="right" width="200">
         <template #default="{ row }">
-          <el-button link type="primary" @click="table.build(row)">构建</el-button>
-          <el-divider direction="vertical" />
           <el-button link type="primary" @click="editForm.toDetail(row)">详情</el-button>
-          <el-divider direction="vertical" />
-          <el-button link type="primary" @click="table.delete(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -78,23 +74,30 @@
     <el-drawer
       v-model="editForm.detailShow" 
       direction="rtl"
-      size="40%"
+      size="60%"
     >
       <template #header>
-        <h4>构建详情</h4>
+        <h4>发布详情</h4>
       </template>
       <template #default>
+        <el-button type="primary" round @click="table.fetchDeployServiceRecord(table.activeDeployRecord)" >刷新</el-button>
+        <el-button type="primary" round @click="table.startDeploy(multipleDeployServiceRecordsSelection)">发布</el-button>
+        <el-button type="primary" round @click="table.approveDeploy(multipleDeployServiceRecordsSelection)">批准</el-button>
         <el-table
-          :data="table.buildServiceRecordData"
+          ref="multipleTableRef"
           row-key="id"
+          :data="table.deployServiceRecordData"
           table-layout="auto"
           max-height="900"
+          @selection-change="handleDeployServiceRecordsSelectionChange"
+          :default-sort="{ prop: 'cluster_name', order: 'ascending' }"
         >
+          <el-table-column type="selection" :selectable="selectable" width="55" />
           <el-table-column prop="service_name" label="服务名称" />
-          <el-table-column prop="branch" label="构建分支" />
-          <el-table-column prop="image" label="构建镜像" />
-          <el-table-column prop="build_url" label="构建地址" />、
+          <el-table-column prop="env" label="发布环境" />
+          <el-table-column prop="image" label="发布镜像" />
           <el-table-column prop="status" label="状态" />
+          <el-table-column prop="cluster_name" label="发布集群" />
         </el-table>
       </template>
       <template #footer>
@@ -108,9 +111,18 @@
 
 <script lang="ts" setup>
 import { ref, reactive, computed } from 'vue'
-import { ElMessage, type FormInstance } from 'element-plus'
+import { ElMessage, type FormInstance, type TableInstance } from 'element-plus'
 import http from '@/api'
 import newBuildRecordIndex from '@/views/cicd/buildRecord/newBuildRecord.vue'
+
+const selectable = (row: any) => !["Running","Failed","Deploying"].some(status => row.status.includes(status))
+
+const multipleTableRef = ref<TableInstance>();
+const multipleDeployServiceRecordsSelection = ref<any[]>([])
+
+const handleDeployServiceRecordsSelectionChange = (val: any[]) => {
+  multipleDeployServiceRecordsSelection.value = val
+}
 
 // 搜索表单配置
 const searchRef = ref<FormInstance | null>(null);
@@ -172,7 +184,8 @@ const editForm = reactive({
   },
   toDetail: (row: any) => {
     editForm.detailShow = true
-    table.fetchBuildServiceRecord(row)
+    table.activeDeployRecord = row
+    table.fetchDeployServiceRecord(table.activeDeployRecord)
   },
 })
 // 表格配置
@@ -180,8 +193,9 @@ const table = reactive({
   loading: false,
   border: true,
   activeProject: '请选择项目名称',
+  activeDeployRecord: null as any,
   data: [] as any[],
-  buildServiceRecordData: [] as any[],
+  deployServiceRecordData: [] as any[],
   filteredData: [] as any[],
   projectData: [] as any[],
   request: () => {
@@ -194,10 +208,10 @@ const table = reactive({
       })
     }
   },
-  fetchBuildServiceRecord: (form: any) => {
+  fetchDeployServiceRecord: (form: any) => {
     table.loading = true
-    http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/deploy_service_record?build_record=${form.name}`).then((res: any) => {
-      table.buildServiceRecordData = res.data
+    http.get(import.meta.env.VITE_APP_BASE_URL + `/cicd/fetch/deploy_service_record?deploy_record=${form.name}`).then((res: any) => {
+      table.deployServiceRecordData = res.data
       table.loading = false
     })
   },
@@ -227,6 +241,22 @@ const table = reactive({
   selectProject: (project_name: string) => {
     table.activeProject = project_name
     table.request()
+  },
+  startDeploy: (deployService: any) => {
+    table.loading = true
+    http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/start_deploy`, deployService).then((res: any) => {
+      table.loading = false
+      table.fetchDeployServiceRecord(table.activeDeployRecord)
+      ElMessage.success(res.message)
+    })
+  },
+  approveDeploy: (deployService: any) => {
+    table.loading = true
+    http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/v2/approve_deploy`, deployService).then((res: any) => {
+      table.loading = false
+      table.fetchDeployServiceRecord(table.activeDeployRecord)
+      ElMessage.success(res.message)
+    })
   }
 })
 

@@ -41,5 +41,7 @@ func SetupRouter(r *gin.Engine) {
 		_cicd.DELETE("delete/:type/:id", cicd.HandleCICDDelete)
 		_cicd.POST("service/cicd_map/:id", cicd.HandleServiceCICDMap)
 		_cicd.POST("/build/:id", cicd.HandleCICDBuildByJenkins)
+		_cicd.POST("/start_deploy", cicd.HandleStartDeploy)
+		//_cicd.POST("/approve_deploy", cicd.HandleApproveDeploy)
 	}
 }

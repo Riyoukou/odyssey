@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -69,4 +70,67 @@ func SendRequest(method, url string, headers map[string]string, data map[string]
 	}
 
 	return resp.StatusCode, respBody, nil
+}
+
+// RequestData 用于存储请求数据
+type RequestData struct {
+	Method  string
+	URL     string
+	Headers map[string]string
+	Body    interface{}
+}
+
+// NewRequestData 创建一个新的请求数据
+func NewRequestData(method, url string, headers map[string]string, body interface{}) *RequestData {
+	return &RequestData{
+		Method:  method,
+		URL:     url,
+		Headers: headers,
+		Body:    body,
+	}
+}
+
+// HttpRequest 执行 HTTP 请求
+func HttpRequest(reqData *RequestData) (string, error) {
+	// 创建一个 HTTP 客户端
+	client := &http.Client{
+		Timeout: 10 * time.Second, // 设置超时
+	}
+
+	// 准备请求的 body 数据
+	var reqBody []byte
+	var err error
+	if reqData.Body != nil {
+		reqBody, err = json.Marshal(reqData.Body) // 将 body 转换成 JSON
+		if err != nil {
+			return "", errors.New("failed to marshal body")
+		}
+	}
+
+	// 创建请求对象
+	req, err := http.NewRequest(reqData.Method, reqData.URL, bytes.NewBuffer(reqBody))
+	if err != nil {
+		return "", err
+	}
+
+	// 设置请求头
+	for key, value := range reqData.Headers {
+		req.Header.Set(key, value)
+	}
+
+	// 执行请求
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// 使用 io.ReadAll 替代 ioutil.ReadAll
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	// 返回响应内容
+	return string(body), nil
 }

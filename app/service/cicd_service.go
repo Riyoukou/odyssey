@@ -4,14 +4,24 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/Riyoukou/odyssey/app/model"
 	"github.com/Riyoukou/odyssey/app/repository"
+	"github.com/Riyoukou/odyssey/app/utils"
 	"github.com/Riyoukou/odyssey/pkg/logger"
 	"github.com/bndr/gojenkins"
+	kruiseclientset "github.com/openkruise/kruise-api/client/clientset/versioned"
+	"gopkg.in/yaml.v3"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 func ServiceCICDMap(cicdMap map[string][]model.ServiceDeployMap, action string, clusters []string, updateData model.ServiceDeployMap) []byte {
@@ -293,4 +303,351 @@ func GetJenkinsBuildImage(ctx context.Context, jenkins *gojenkins.Jenkins, jobNa
 	} else {
 		return "", fmt.Errorf("failed to assert imageTag to string")
 	}
+}
+
+func CICDSyncV2(deployServiceRecords []model.DeployServiceRecordTable) {
+	go func() {
+		for _, deployServiceRecord := range deployServiceRecords {
+			serviceDetail, err := repository.GetServiceByNameAndProjectByEnv(deployServiceRecord.ServiceName, deployServiceRecord.ProjectName, deployServiceRecord.Env)
+			if err != nil {
+				fmt.Printf("❌ Get cluster failed: %v\n", err)
+				return
+			}
+
+			var deployConfig model.ServiceDeployMap
+
+			err = json.Unmarshal(serviceDetail.DeployMap, &deployConfig)
+			if err != nil {
+				panic(err)
+			}
+
+			argocdData, err := repository.GetCICDToolByName(deployConfig[deployServiceRecord.ClusterName][0].Release.CicdTool)
+			if err != nil {
+				logger.Errorf("获取代码库失败: %v", err)
+			}
+
+			argocdCredential, err := repository.GetCredentialByName(argocdData.CredentialName)
+			if err != nil {
+				logger.Errorf("获取jenkins密码失败: %v", err)
+			}
+
+			syncURL := fmt.Sprintf("%s/api/v1/applications/%s/sync", argocdData.URL, deployConfig[deployServiceRecord.ClusterName][0].Release.ArgoCDApplication)
+
+			err = utils.ArgoCDSyncV2LiteV2(syncURL, argocdCredential.Data)
+			if err != nil {
+				fmt.Printf("❌ Sync service failed: %v\n", err)
+				return
+			}
+			fmt.Printf("✅ Service %s sync success.\n", deployConfig[deployServiceRecord.ClusterName][0].Release.ArgoCDApplication)
+			time.Sleep(1 * time.Second)
+		}
+	}()
+}
+
+var deployLock sync.Mutex
+
+func StartDeployBykustomization(deployServiceRecords []model.DeployServiceRecordTable) {
+	deployLock.Lock()
+	defer deployLock.Unlock()
+	serviceDetail, err := repository.GetServiceByNameAndProjectByEnv(deployServiceRecords[0].ServiceName, deployServiceRecords[0].ProjectName, deployServiceRecords[0].Env)
+	if err != nil {
+		fmt.Printf("❌ Get cluster failed: %v\n", err)
+		return
+	}
+
+	var deployConfig model.ServiceDeployMap
+
+	err = json.Unmarshal([]byte(serviceDetail.DeployMap), &deployConfig)
+	if err != nil {
+		panic(err)
+	}
+
+	gitData, err := repository.GetCodeLibraryByNameAndProject(deployConfig[deployServiceRecords[0].ClusterName][0].Yaml.GitOpsRepo, deployServiceRecords[0].ProjectName)
+	if err != nil {
+		logger.Errorf("获取代码库失败: %v", err)
+	}
+
+	codeSource, err := repository.GetCICDToolByName(gitData.CodeSourceName)
+	if err != nil {
+		logger.Errorf("获取代码源失败: %v", err)
+	}
+
+	gitCredential, err := repository.GetCredentialByName(codeSource.CredentialName)
+	if err != nil {
+		logger.Errorf("获取jenkins密码失败: %v", err)
+	}
+
+	// 克隆仓库
+	repoURL := gitData.URL
+	branch := "master"
+
+	token := gitCredential.Data // 强烈建议从环境变量读取
+	tmpDir := filepath.Join(os.TempDir(), fmt.Sprintf("gitops-%d", time.Now().Unix()))
+	fmt.Println("✅ Cloning repo to", tmpDir)
+
+	//结束后删除文件夹
+	defer func() {
+		os.RemoveAll(tmpDir)
+		fmt.Println("✅ tmpDir deleted.")
+	}()
+	//clone仓库
+	repo := utils.GitClone(repoURL, branch, tmpDir, token)
+	//更新kustomization.yaml
+	for _, deployServiceRecord := range deployServiceRecords {
+		parts := strings.Split(deployServiceRecord.Image, ":")
+		if len(parts) != 2 {
+			fmt.Printf("invalid image format: %s", deployServiceRecord.Image)
+		}
+		dockerRegistry := parts[0]
+		imageTag := parts[1]
+
+		serviceDetail, err := repository.GetServiceByNameAndProjectByEnv(deployServiceRecord.ServiceName, deployServiceRecord.ProjectName, deployServiceRecord.Env)
+		if err != nil {
+			fmt.Printf("❌ Get cluster failed: %v\n", err)
+			return
+		}
+
+		var deployConfig model.ServiceDeployMap
+
+		err = json.Unmarshal([]byte(serviceDetail.DeployMap), &deployConfig)
+		if err != nil {
+			panic(err)
+		}
+
+		err = updateKustomizationImageTag(filepath.Join(tmpDir, fmt.Sprintf("%s/kustomization.yaml", deployConfig[deployServiceRecord.ClusterName][0].Yaml.FilePath)), dockerRegistry, imageTag)
+		if err != nil {
+			fmt.Printf("❌ Update kustomization.yaml failed: %v\n", err)
+			return
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+
+	utils.GitCommit(repo, ".")
+
+	utils.GitPush(repo, tmpDir, repoURL, branch, token)
+}
+
+// 更新 kustomization.yaml 中镜像 tag（保留注释）
+func updateKustomizationImageTag(path, imageName, newTag string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	var root yaml.Node
+	if err := yaml.Unmarshal(data, &root); err != nil {
+		return err
+	}
+
+	if root.Kind != yaml.DocumentNode || len(root.Content) == 0 {
+		return fmt.Errorf("invalid YAML")
+	}
+	doc := root.Content[0]
+
+	var imagesNode *yaml.Node
+	for i := 0; i < len(doc.Content); i += 2 {
+		key := doc.Content[i]
+		if key.Value == "images" {
+			imagesNode = doc.Content[i+1]
+			break
+		}
+	}
+	if imagesNode == nil {
+		return fmt.Errorf("images section not found")
+	}
+
+	updated := false
+	for _, imageItem := range imagesNode.Content {
+		var nameNode, tagNode *yaml.Node
+		for i := 0; i < len(imageItem.Content); i += 2 {
+			key := imageItem.Content[i]
+			val := imageItem.Content[i+1]
+			if key.Value == "name" && val.Value == imageName {
+				nameNode = val
+			}
+			if key.Value == "newTag" {
+				tagNode = val
+			}
+		}
+		if nameNode != nil {
+			if tagNode != nil {
+				tagNode.Value = newTag
+			} else {
+				imageItem.Content = append(imageItem.Content,
+					&yaml.Node{Kind: yaml.ScalarNode, Value: "newTag"},
+					&yaml.Node{Kind: yaml.ScalarNode, Value: newTag},
+				)
+			}
+			updated = true
+			break
+		}
+	}
+
+	if !updated {
+		return fmt.Errorf("image %s not found", imageName)
+	}
+
+	outFile, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
+
+	encoder := yaml.NewEncoder(outFile)
+	encoder.SetIndent(2)
+	return encoder.Encode(&root)
+}
+
+func GetWorkloadStatus(clusterName, workloadType, namespace, serviceName string) string {
+	cluster, err := repository.GetClusterByName(clusterName)
+	if err != nil {
+		fmt.Printf("❌ Get cluster failed: %v\n", err)
+		return "Failed"
+	}
+
+	config, err := clientcmd.RESTConfigFromKubeConfig([]byte(cluster.Config))
+	if err != nil {
+		log.Fatalf("Failed to create REST config: %v", err)
+	}
+
+	clientset := utils.CreateKubernetesClientset(cluster.Config)
+	kruiseClient := kruiseclientset.NewForConfigOrDie(config)
+
+	for {
+		switch workloadType {
+		case "StatefulSet":
+			// 官方 StatefulSet
+			sts, err := clientset.AppsV1().StatefulSets(namespace).Get(context.Background(), serviceName, metav1.GetOptions{})
+			if err == nil {
+				if sts.Status.ReadyReplicas == *sts.Spec.Replicas {
+					return "Running"
+				}
+			}
+
+			// Kruise StatefulSet
+			if errors.IsNotFound(err) {
+				ksts, kerr := kruiseClient.AppsV1alpha1().StatefulSets(namespace).Get(context.Background(), serviceName, metav1.GetOptions{})
+				if kerr == nil {
+					if ksts.Status.ReadyReplicas == *ksts.Spec.Replicas {
+						return "Running"
+					}
+				}
+			}
+		case "DaemonSet":
+			ds, err := clientset.AppsV1().DaemonSets(namespace).Get(context.Background(), serviceName, metav1.GetOptions{})
+			if err == nil {
+				if ds.Status.NumberReady == ds.Status.DesiredNumberScheduled {
+					return "Running"
+				}
+			}
+			// Kruise DaemonSet
+			if errors.IsNotFound(err) {
+				kds, kerr := kruiseClient.AppsV1alpha1().DaemonSets(namespace).Get(context.Background(), serviceName, metav1.GetOptions{})
+				if kerr == nil {
+					if kds.Status.NumberReady == kds.Status.DesiredNumberScheduled {
+						return "Running"
+					}
+				}
+			}
+		default:
+			status := GetKruiseStatus(clusterName, serviceName, namespace)
+			return status
+		}
+
+		time.Sleep(10 * time.Second)
+	}
+}
+
+func GetKruiseStatus(clusterName, service, namespace string) string {
+	clusterDetail, err := repository.GetClusterByName(clusterName)
+	if err != nil {
+		logger.Errorf("获取集群失败: %v", err)
+		return "Failed"
+	}
+	kruiseClientset := utils.CreateKruiseClientset(clusterDetail.Config)
+	maxRetryCount := 120 // 最大重试次数，可以根据需要调整
+	retryCount := 0
+	time.Sleep(5 * time.Second)
+	for {
+		for retryCount < maxRetryCount {
+			// 获取 Rollout 状态
+			kruiseClient, err := kruiseClientset.RolloutsV1beta1().Rollouts(namespace).Get(context.Background(), service, metav1.GetOptions{})
+			if err != nil {
+				logger.Errorf("Failed to get rollout status: %v", err)
+				return "Failed"
+			}
+
+			// 获取步骤信息
+			maxSteps := int32(len(kruiseClient.Spec.Strategy.Canary.Steps))
+			currentStepIndex := kruiseClient.Status.CanaryStatus.CommonStatus.CurrentStepIndex
+			currentStepState := string(kruiseClient.Status.CanaryStatus.CommonStatus.CurrentStepState)
+
+			// StepPaused 状态
+			if currentStepState == "StepPaused" {
+				return fmt.Sprintf("Pending(%d/%d)", currentStepIndex, maxSteps)
+			}
+
+			// 完成状态
+			if currentStepState == "Completed" && currentStepIndex == maxSteps {
+				return fmt.Sprintf("Running(%d/%d)", currentStepIndex, maxSteps)
+			}
+
+			retryCount++
+			log.Printf("Service %s Waiting for next step, current state: %s, step: %d/%d", service, currentStepState, currentStepIndex, maxSteps)
+
+			// 如果没有完成，可以加入延迟再尝试
+			time.Sleep(10 * time.Second) // 设置等待时间，避免频繁轮询
+		}
+	}
+}
+
+func ApproveRolloutKruise(clusterName, namespace, appName string) {
+
+	cluster, err := repository.GetClusterByName(clusterName)
+	if err != nil {
+		fmt.Printf("❌ Get cluster failed: %v\n", err)
+		return
+	}
+
+	config, err := clientcmd.RESTConfigFromKubeConfig([]byte(cluster.Config))
+	if err != nil {
+		logger.Errorf("Failed to create REST config: %v", err)
+	}
+
+	dynamicClientset, err := dynamic.NewForConfig(config)
+	if err != nil {
+		log.Fatalf("创建 Kubernetes DynamicClient 失败: %v", err)
+	}
+
+	rollout := utils.RolloutGetOptions(dynamicClientset, namespace, appName)
+	// 断言获取到的 Rollout 状态为 map[string]interface{}
+	status, ok := rollout.Object["status"].(map[string]interface{})
+	if !ok {
+		logger.Error("无法获取 Rollout 状态")
+		return
+	}
+
+	// 获取 canaryStatus
+	canaryStatus, ok := status["canaryStatus"].(map[string]interface{})
+	if !ok {
+		logger.Error("无法获取 canaryStatus")
+		return
+	}
+
+	if canaryStatus["currentStepState"].(string) != "StepPaused" {
+		fmt.Printf("%s Rollout 未暂停，无法批准！当前状态为: %s\n", appName, canaryStatus["currentStepState"].(string))
+		return
+	}
+
+	canaryStatus["currentStepState"] = "StepReady"
+
+	// 更新 Rollout 资源
+	err = utils.RolloutUpdateOptions(dynamicClientset, namespace, appName, rollout)
+	if err != nil {
+		logger.Errorf("Rollout 更新失败: %v", err)
+		return
+	}
+
+	fmt.Printf("%s Rollout 更新成功！\n", appName)
 }
