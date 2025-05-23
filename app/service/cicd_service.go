@@ -557,7 +557,6 @@ func GetWorkloadStatus(clusterName, workloadType, namespace, serviceName string)
 			}
 		default:
 			status := GetKruiseStatus(clusterName, serviceName, namespace)
-			fmt.Print("987\n")
 			return status
 		}
 		time.Sleep(10 * time.Second)
@@ -594,14 +593,14 @@ func GetKruiseStatus(clusterName, service, namespace string) string {
 				currentStepIndex int32
 				currentStepState string
 			)
+			maxSteps := int32(len(kruiseClient.Spec.Strategy.Canary.Steps))
 			if kruiseClient.Status.CanaryStatus == nil {
-				currentStepIndex = 0
+				currentStepIndex = maxSteps
 				currentStepState = "Completed"
 			} else {
 				currentStepIndex = kruiseClient.Status.CanaryStatus.CommonStatus.CurrentStepIndex
 				currentStepState = string(kruiseClient.Status.CanaryStatus.CommonStatus.CurrentStepState)
 			}
-			maxSteps := int32(len(kruiseClient.Spec.Strategy.Canary.Steps))
 
 			// StepPaused 状态
 			if currentStepState == "StepPaused" {
@@ -618,7 +617,6 @@ func GetKruiseStatus(clusterName, service, namespace string) string {
 
 			// 如果没有完成，可以加入延迟再尝试
 			time.Sleep(10 * time.Second) // 设置等待时间，避免频繁轮询
-			fmt.Print("654")
 		}
 	}
 }
@@ -631,7 +629,12 @@ func ApproveRolloutKruise(clusterName, namespace, appName string) {
 		return
 	}
 
-	config, err := clientcmd.RESTConfigFromKubeConfig([]byte(cluster.Config))
+	credential, err := repository.GetCredentialByName(cluster.Config)
+	if err != nil {
+		log.Fatalf("❌ Get credential failed: %v\n", err)
+	}
+
+	config, err := clientcmd.RESTConfigFromKubeConfig([]byte(credential.Data))
 	if err != nil {
 		logger.Errorf("Failed to create REST config: %v", err)
 	}
