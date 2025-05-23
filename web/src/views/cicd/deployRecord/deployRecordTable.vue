@@ -252,7 +252,7 @@ const table = reactive({
   },
   approveDeploy: (deployService: any) => {
     table.loading = true
-    http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/v2/approve_deploy`, deployService).then((res: any) => {
+    http.post(import.meta.env.VITE_APP_BASE_URL + `/cicd/approve_deploy`, deployService).then((res: any) => {
       table.loading = false
       table.fetchDeployServiceRecord(table.activeDeployRecord)
       ElMessage.success(res.message)
