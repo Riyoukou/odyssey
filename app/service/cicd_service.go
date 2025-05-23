@@ -506,12 +506,17 @@ func GetWorkloadStatus(clusterName, workloadType, namespace, serviceName string)
 		return "Failed"
 	}
 
-	config, err := clientcmd.RESTConfigFromKubeConfig([]byte(cluster.Config))
+	credential, err := repository.GetCredentialByName(cluster.Config)
+	if err != nil {
+		log.Fatalf("❌ Get credential failed: %v\n", err)
+	}
+
+	config, err := clientcmd.RESTConfigFromKubeConfig([]byte(string(credential.Data)))
 	if err != nil {
 		log.Fatalf("Failed to create REST config: %v", err)
 	}
 
-	clientset := utils.CreateKubernetesClientset(cluster.Config)
+	clientset := utils.CreateKubernetesClientset(credential.Data)
 	kruiseClient := kruiseclientset.NewForConfigOrDie(config)
 
 	for {
@@ -552,9 +557,9 @@ func GetWorkloadStatus(clusterName, workloadType, namespace, serviceName string)
 			}
 		default:
 			status := GetKruiseStatus(clusterName, serviceName, namespace)
+			fmt.Print("987\n")
 			return status
 		}
-
 		time.Sleep(10 * time.Second)
 	}
 }
@@ -565,7 +570,13 @@ func GetKruiseStatus(clusterName, service, namespace string) string {
 		logger.Errorf("获取集群失败: %v", err)
 		return "Failed"
 	}
-	kruiseClientset := utils.CreateKruiseClientset(clusterDetail.Config)
+
+	credential, err := repository.GetCredentialByName(clusterDetail.Config)
+	if err != nil {
+		log.Fatalf("❌ Get credential failed: %v\n", err)
+	}
+
+	kruiseClientset := utils.CreateKruiseClientset(credential.Data)
 	maxRetryCount := 120 // 最大重试次数，可以根据需要调整
 	retryCount := 0
 	time.Sleep(5 * time.Second)
@@ -579,9 +590,18 @@ func GetKruiseStatus(clusterName, service, namespace string) string {
 			}
 
 			// 获取步骤信息
+			var (
+				currentStepIndex int32
+				currentStepState string
+			)
+			if kruiseClient.Status.CanaryStatus == nil {
+				currentStepIndex = 0
+				currentStepState = "Completed"
+			} else {
+				currentStepIndex = kruiseClient.Status.CanaryStatus.CommonStatus.CurrentStepIndex
+				currentStepState = string(kruiseClient.Status.CanaryStatus.CommonStatus.CurrentStepState)
+			}
 			maxSteps := int32(len(kruiseClient.Spec.Strategy.Canary.Steps))
-			currentStepIndex := kruiseClient.Status.CanaryStatus.CommonStatus.CurrentStepIndex
-			currentStepState := string(kruiseClient.Status.CanaryStatus.CommonStatus.CurrentStepState)
 
 			// StepPaused 状态
 			if currentStepState == "StepPaused" {
@@ -598,6 +618,7 @@ func GetKruiseStatus(clusterName, service, namespace string) string {
 
 			// 如果没有完成，可以加入延迟再尝试
 			time.Sleep(10 * time.Second) // 设置等待时间，避免频繁轮询
+			fmt.Print("654")
 		}
 	}
 }
