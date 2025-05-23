@@ -49,4 +49,4 @@ cd web && npm run dev
 | 项目管理 | ✅ |
 | 服务管理 | ✅ |
 | CI | ✅ |
-| CD |  |
+| CD | ✅ |
