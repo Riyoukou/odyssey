@@ -3,6 +3,9 @@ server:
   address: ":8000"
   log_file_name: "log/odyssey.log"
 
+sqlite:
+  path: "./data/odyssey.db"
+  
 mysql:
   dsn: "root:1234@tcp(odyssey.mysql:3306)/odyssey?charset=utf8mb4&parseTime=True&loc=Local"
 
